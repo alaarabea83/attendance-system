@@ -59,29 +59,8 @@
         direction: rtl;
       }
 
-      /* ===== APP SHELL — hidden until logged in ===== */
-      #sidebar,
-      .sidebar-overlay,
-      .main {
-        display: none !important;
-      }
-
-      body.logged-in #sidebar {
-        display: flex !important;
-      }
-
-      body.logged-in .main {
-        display: flex !important;
-      }
-
-      body.logged-in .sidebar-overlay {
-        /* controlled separately by open class */
-        display: none;
-      }
-
-      body.logged-in .sidebar-overlay.open {
-        display: block !important;
-      }
+      /* ===== APP SHELL — visibility controlled by JS directly ===== */
+      /* لا نستخدم CSS لإخفاء الـ shell لأن JS يتحكم فيه مباشرة */
 
       /* ===== SIDEBAR ===== */
       .sidebar {
@@ -2131,11 +2110,12 @@
     <div
       class="sidebar-overlay"
       id="sidebar-overlay"
+      style="display: none"
       onclick="closeSidebar()"
     ></div>
 
     <!-- SIDEBAR -->
-    <nav class="sidebar" id="sidebar">
+    <nav class="sidebar" id="sidebar" style="display: none">
       <div class="sidebar-logo">
         <div class="logo-icon"><i class="fas fa-fingerprint"></i></div>
         <h2>نظام الحضور</h2>
@@ -2181,6 +2161,9 @@
         >
           <i class="fas fa-hourglass-half"></i> الوقت الإضافي
         </div>
+        <div class="nav-item" data-page="payroll" onclick="showPage('payroll')">
+          <i class="fas fa-money-bill-wave"></i> المرتبات
+        </div>
 
         <div class="nav-section-title">النظام</div>
         <div
@@ -2208,7 +2191,7 @@
     </nav>
 
     <!-- MAIN -->
-    <div class="main">
+    <div class="main" id="main-wrapper" style="display: none">
       <!-- TOPBAR -->
       <header class="topbar">
         <div class="topbar-left">
@@ -3043,6 +3026,144 @@
         </div>
       </div>
 
+      <!-- ===== PAGE: PAYROLL ===== -->
+      <div class="page" id="page-payroll">
+        <div class="page-header">
+          <div>
+            <h1>
+              <i
+                class="fas fa-money-bill-wave"
+                style="color: var(--primary); margin-left: 8px"
+              ></i
+              >حساب المرتبات
+            </h1>
+            <p>احتساب رواتب الموظفين بناءً على الحضور والغياب والوقت الإضافي</p>
+          </div>
+          <button class="btn btn-success" onclick="exportPayroll()">
+            <i class="fas fa-file-arrow-down"></i> تصدير كشف الرواتب
+          </button>
+        </div>
+
+        <!-- إعدادات الحساب -->
+        <div class="card" style="margin-bottom: 20px">
+          <div class="card-header">
+            <div class="card-title">
+              <i class="fas fa-sliders"></i> إعدادات الاحتساب
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="calcPayroll()">
+              <i class="fas fa-calculator"></i> احتساب الرواتب
+            </button>
+          </div>
+          <div class="card-body">
+            <div
+              style="
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+                gap: 16px;
+              "
+            >
+              <div class="form-group">
+                <label>الشهر</label>
+                <select class="form-control" id="pay-month">
+                  <option value="1">يناير</option>
+                  <option value="2">فبراير</option>
+                  <option value="3">مارس</option>
+                  <option value="4">أبريل</option>
+                  <option value="5">مايو</option>
+                  <option value="6">يونيو</option>
+                  <option value="7">يوليو</option>
+                  <option value="8">أغسطس</option>
+                  <option value="9">سبتمبر</option>
+                  <option value="10">أكتوبر</option>
+                  <option value="11">نوفمبر</option>
+                  <option value="12">ديسمبر</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>السنة</label>
+                <select class="form-control" id="pay-year">
+                  <option value="2025">2025</option>
+                  <option value="2026" selected>2026</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>خصم يوم الغياب (من الراتب)</label>
+                <select class="form-control" id="pay-absent-deduct">
+                  <option value="daily">يوم كامل</option>
+                  <option value="half">نصف يوم</option>
+                  <option value="none">بدون خصم</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>خصم التأخير</label>
+                <select class="form-control" id="pay-late-deduct">
+                  <option value="hourly">بالساعة</option>
+                  <option value="fixed">مبلغ ثابت لكل مرة</option>
+                  <option value="none">بدون خصم</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>مبلغ خصم التأخير</label>
+                <input
+                  type="number"
+                  class="form-control"
+                  id="pay-late-amount"
+                  value="20"
+                  min="0"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ملخص الرواتب -->
+        <div
+          id="payroll-summary-cards"
+          style="
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+          "
+        ></div>
+
+        <!-- جدول الرواتب -->
+        <div class="card">
+          <div class="card-body" style="padding: 0">
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>الموظف</th>
+                    <th>القسم</th>
+                    <th>الراتب الأساسي</th>
+                    <th>أيام الحضور</th>
+                    <th>أيام الغياب</th>
+                    <th>خصم الغياب</th>
+                    <th>مرات التأخير</th>
+                    <th>خصم التأخير</th>
+                    <th>الوقت الإضافي</th>
+                    <th>صافي الراتب</th>
+                    <th>الحالة</th>
+                  </tr>
+                </thead>
+                <tbody id="payroll-tbody">
+                  <tr>
+                    <td colspan="11">
+                      <div class="empty-state">
+                        <i class="fas fa-calculator"></i>
+                        <h3>اضغط "احتساب الرواتب" لعرض النتائج</h3>
+                        <p>اختر الشهر والسنة ثم اضغط الزر</p>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- ===== FOOTER ===== -->
       <footer class="footer">
         <div class="footer-copy">
@@ -3076,7 +3197,6 @@
       </footer>
     </div>
     <!-- /.main -->
-
     <!-- ===== MODALS ===== -->
 
     <!-- Modal: Add Attendance -->
@@ -3542,6 +3662,56 @@
       </div>
     </div>
 
+    <!-- Modal: Set Employee Salary -->
+    <div class="modal-overlay" id="modal-set-salary">
+      <div class="modal" style="max-width: 420px">
+        <div class="modal-header">
+          <div class="modal-title">
+            <i
+              class="fas fa-money-bill-wave"
+              style="color: var(--primary); margin-left: 8px"
+            ></i
+            >تحديد الراتب الأساسي
+          </div>
+          <button class="modal-close" onclick="closeModal('modal-set-salary')">
+            ✕
+          </button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="salary-emp-id" />
+          <div class="form-group" style="margin-bottom: 16px">
+            <label>اسم الموظف</label>
+            <input
+              type="text"
+              class="form-control"
+              id="salary-emp-name"
+              readonly
+              style="background: var(--bg)"
+            />
+          </div>
+          <div class="form-group">
+            <label>الراتب الأساسي الشهري</label>
+            <input
+              type="number"
+              class="form-control"
+              id="salary-amount"
+              placeholder="مثال: 5000"
+              min="0"
+              step="100"
+            />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-gray" onclick="closeModal('modal-set-salary')">
+            إلغاء
+          </button>
+          <button class="btn btn-primary" onclick="saveSalary()">
+            <i class="fas fa-floppy-disk"></i> حفظ
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Toast Container -->
     <div id="toast-container"></div>
 
@@ -3864,6 +4034,7 @@
         leaves: "الإجازات والغياب",
         reports: "التقارير",
         overtime: "الوقت الإضافي",
+        payroll: "حساب المرتبات",
         notifications: "الإشعارات",
         settings: "الإعدادات",
         profile: "الملف الشخصي",
@@ -3922,6 +4093,9 @@
             break;
           case "profile":
             renderProfile();
+            break;
+          case "payroll":
+            renderPayroll();
             break;
         }
       }
@@ -5277,12 +5451,14 @@
         const overlay = document.getElementById("sidebar-overlay");
         const btn = document.getElementById("hamburger-btn");
         const isOpen = sidebar.classList.toggle("open");
+        overlay.style.display = isOpen ? "block" : "none";
         overlay.classList.toggle("open", isOpen);
         btn.classList.toggle("open", isOpen);
       }
 
       function closeSidebar() {
         document.getElementById("sidebar").classList.remove("open");
+        document.getElementById("sidebar-overlay").style.display = "none";
         document.getElementById("sidebar-overlay").classList.remove("open");
         document.getElementById("hamburger-btn").classList.remove("open");
       }
@@ -5389,9 +5565,13 @@
       }
 
       function enterApp(name, email, silent = false) {
-        // إظهار واجهة التطبيق وإخفاء صفحة الدخول
-        document.body.classList.add("logged-in");
+        // إخفاء صفحة الدخول
+        document.getElementById("auth-wrapper").style.display = "none";
         document.getElementById("auth-wrapper").classList.remove("show");
+
+        // إظهار القائمة الجانبية والمحتوى
+        document.getElementById("sidebar").style.display = "flex";
+        document.getElementById("main-wrapper").style.display = "flex";
 
         // تحديث بيانات المستخدم في الـ topbar
         document.getElementById("topbar-username").textContent = name;
@@ -5409,11 +5589,15 @@
         if (!confirm("هل تريد تسجيل الخروج؟")) return;
         DB.set("current_user", null);
 
-        // إخفاء واجهة التطبيق وإظهار صفحة الدخول فقط
-        document.body.classList.remove("logged-in");
+        // إخفاء القائمة والمحتوى
+        document.getElementById("sidebar").style.display = "none";
+        document.getElementById("main-wrapper").style.display = "none";
+        document.getElementById("sidebar-overlay").style.display = "none";
+
+        // إظهار صفحة الدخول فقط
+        document.getElementById("auth-wrapper").style.display = "flex";
         document.getElementById("auth-wrapper").classList.add("show");
         hideAuthAlert();
-        closeSidebar();
       }
 
       function checkAuth() {
@@ -5431,18 +5615,6 @@
         updateFirebaseStatus();
       }
 
-      function testFirebaseConnection() {
-        if (FIREBASE_ENABLED) {
-          toast("Firebase مُعدَّل في الكود — جاري اختبار الاتصال...", "info");
-          // ضع هنا منطق اختبار الاتصال الفعلي مع Firebase SDK
-        } else {
-          toast(
-            "Firebase غير مُعدَّل — النظام يعمل بـ localStorage",
-            "warning",
-          );
-        }
-      }
-
       function updateFirebaseStatus() {
         const box = document.getElementById("fb-status-box");
         const txt = document.getElementById("fb-status-text");
@@ -5455,6 +5627,294 @@
           txt.textContent =
             "Firebase غير مُعدَّل — النظام يعمل بـ localStorage (عدّل FIREBASE_CONFIG في الكود)";
         }
+      }
+
+      // =============================================
+      //  PAYROLL (المرتبات)
+      // =============================================
+      function renderPayroll() {
+        const now = new Date();
+        const monthEl = document.getElementById("pay-month");
+        const yearEl = document.getElementById("pay-year");
+        if (monthEl) monthEl.value = now.getMonth() + 1;
+        if (yearEl) yearEl.value = now.getFullYear();
+        calcPayroll();
+      }
+
+      function calcPayroll() {
+        const month = parseInt(document.getElementById("pay-month").value);
+        const year = parseInt(document.getElementById("pay-year").value);
+        const absentDeduct = document.getElementById("pay-absent-deduct").value;
+        const lateDeduct = document.getElementById("pay-late-deduct").value;
+        const lateAmount =
+          parseFloat(document.getElementById("pay-late-amount").value) || 0;
+
+        const employees = DB.get("employees") || [];
+        const att = DB.get("attendance") || [];
+        const ot = DB.get("overtime") || [];
+        const monthStr = `${year}-${String(month).padStart(2, "0")}`;
+
+        // أيام العمل في الشهر (تقريباً)
+        const settings = DB.get("settings") || {};
+        const workdaysPerWeek = parseInt(settings.workdays) || 5;
+        const daysInMonth = new Date(year, month, 0).getDate();
+        const workDaysInMonth = Math.round((daysInMonth / 7) * workdaysPerWeek);
+
+        const monthNames = [
+          "",
+          "يناير",
+          "فبراير",
+          "مارس",
+          "أبريل",
+          "مايو",
+          "يونيو",
+          "يوليو",
+          "أغسطس",
+          "سبتمبر",
+          "أكتوبر",
+          "نوفمبر",
+          "ديسمبر",
+        ];
+
+        let totalNet = 0,
+          totalDeductions = 0,
+          totalOtPay = 0;
+
+        const rows = employees.map((emp) => {
+          const baseSalary = parseFloat(emp.salary || 0);
+          const dailyRate = baseSalary > 0 ? baseSalary / workDaysInMonth : 0;
+          const hourlyRate = dailyRate / 8;
+
+          const empAtt = att.filter(
+            (a) => a.empName === emp.name && a.date.startsWith(monthStr),
+          );
+          const presentDays = empAtt.filter(
+            (a) => a.status === "حاضر" || a.status === "متأخر",
+          ).length;
+          const absentDays = empAtt.filter((a) => a.status === "غائب").length;
+          const lateTimes = empAtt.filter((a) => a.status === "متأخر").length;
+
+          // خصم الغياب
+          let absentDeduction = 0;
+          if (absentDeduct === "daily")
+            absentDeduction = absentDays * dailyRate;
+          else if (absentDeduct === "half")
+            absentDeduction = absentDays * dailyRate * 0.5;
+
+          // خصم التأخير
+          let lateDeduction = 0;
+          if (lateDeduct === "fixed") lateDeduction = lateTimes * lateAmount;
+          else if (lateDeduct === "hourly")
+            lateDeduction = lateTimes * hourlyRate * lateAmount;
+
+          // الوقت الإضافي
+          const empOt = ot.filter(
+            (o) => o.empName === emp.name && o.date.startsWith(monthStr),
+          );
+          const otPay = empOt.reduce(
+            (s, o) => s + parseFloat(o.hours || 0) * parseFloat(o.rate || 0),
+            0,
+          );
+
+          const totalDeduction = absentDeduction + lateDeduction;
+          const netSalary = Math.max(0, baseSalary - totalDeduction + otPay);
+
+          totalNet += netSalary;
+          totalDeductions += totalDeduction;
+          totalOtPay += otPay;
+
+          return {
+            emp,
+            baseSalary,
+            dailyRate,
+            presentDays,
+            absentDays,
+            lateTimes,
+            absentDeduction,
+            lateDeduction,
+            otPay,
+            netSalary,
+          };
+        });
+
+        // بطاقات الملخص
+        const totalBase = rows.reduce((s, r) => s + r.baseSalary, 0);
+        document.getElementById("payroll-summary-cards").innerHTML = `
+    <div class="stat-card">
+      <div class="stat-icon blue"><i class="fas fa-money-bill-wave"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">إجمالي الرواتب الأساسية</div>
+        <div class="stat-value" style="font-size:20px;">${totalBase.toLocaleString("ar-SA")}</div>
+        <div class="stat-sub">شهر ${monthNames[month]}</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon red"><i class="fas fa-arrow-down"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">إجمالي الخصومات</div>
+        <div class="stat-value" style="font-size:20px;color:var(--danger);">${totalDeductions.toLocaleString("ar-SA")}</div>
+        <div class="stat-sub">غياب + تأخير</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon green"><i class="fas fa-clock"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">بدل الوقت الإضافي</div>
+        <div class="stat-value" style="font-size:20px;color:var(--success);">${totalOtPay.toLocaleString("ar-SA")}</div>
+        <div class="stat-sub">أوفر تايم الشهر</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon purple"><i class="fas fa-wallet"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">صافي المرتبات</div>
+        <div class="stat-value" style="font-size:20px;color:var(--primary);">${totalNet.toLocaleString("ar-SA")}</div>
+        <div class="stat-sub">المبلغ الإجمالي المصروف</div>
+      </div>
+    </div>`;
+
+        // جدول التفاصيل
+        const tbody = document.getElementById("payroll-tbody");
+        if (rows.length === 0) {
+          tbody.innerHTML =
+            '<tr><td colspan="11"><div class="empty-state"><i class="fas fa-users"></i><h3>لا يوجد موظفون</h3></div></td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = rows
+          .map((r) => {
+            const hasSalary = r.baseSalary > 0;
+            const pct =
+              r.baseSalary > 0
+                ? Math.round((r.netSalary / r.baseSalary) * 100)
+                : 0;
+            const statusColor =
+              pct >= 90
+                ? "badge-success"
+                : pct >= 70
+                  ? "badge-warning"
+                  : "badge-danger";
+            return `
+      <tr>
+        <td>${empCell(r.emp.name)}</td>
+        <td><span class="badge badge-gray">${r.emp.dept}</span></td>
+        <td>
+          ${
+            hasSalary
+              ? `<span style="font-weight:700;">${r.baseSalary.toLocaleString("ar-SA")}</span>`
+              : `<button class="btn btn-outline btn-sm" onclick="openSalaryModal('${r.emp.id}','${r.emp.name}')">
+                <i class="fas fa-plus"></i> تحديد
+              </button>`
+          }
+        </td>
+        <td><span style="color:var(--success);font-weight:700;">${r.presentDays}</span></td>
+        <td><span style="color:${r.absentDays > 0 ? "var(--danger)" : "var(--gray)"};font-weight:700;">${r.absentDays}</span></td>
+        <td><span style="color:var(--danger);font-weight:600;">${r.absentDeduction > 0 ? "- " + r.absentDeduction.toFixed(0) : "—"}</span></td>
+        <td><span style="color:${r.lateTimes > 0 ? "var(--warning)" : "var(--gray)"};font-weight:700;">${r.lateTimes}</span></td>
+        <td><span style="color:var(--warning);font-weight:600;">${r.lateDeduction > 0 ? "- " + r.lateDeduction.toFixed(0) : "—"}</span></td>
+        <td><span style="color:var(--success);font-weight:600;">${r.otPay > 0 ? "+ " + r.otPay.toLocaleString("ar-SA") : "—"}</span></td>
+        <td><span style="font-size:15px;font-weight:900;color:var(--primary);">${r.netSalary.toLocaleString("ar-SA")}</span></td>
+        <td>
+          ${
+            hasSalary
+              ? `<span class="badge ${statusColor}">${pct}%</span>`
+              : `<span class="badge badge-gray">لم يحدد</span>`
+          }
+        </td>
+      </tr>`;
+          })
+          .join("");
+      }
+
+      function openSalaryModal(empId, empName) {
+        const emp = (DB.get("employees") || []).find((e) => e.id === empId);
+        document.getElementById("salary-emp-id").value = empId;
+        document.getElementById("salary-emp-name").value = empName;
+        document.getElementById("salary-amount").value = emp?.salary || "";
+        document.getElementById("modal-set-salary").classList.add("open");
+      }
+
+      function saveSalary() {
+        const empId = document.getElementById("salary-emp-id").value;
+        const amount = parseFloat(
+          document.getElementById("salary-amount").value,
+        );
+        if (!amount || amount <= 0) {
+          toast("أدخل راتباً صحيحاً", "warning");
+          return;
+        }
+        DB.update("employees", empId, { salary: amount });
+        closeModal("modal-set-salary");
+        toast("تم حفظ الراتب الأساسي");
+        calcPayroll();
+      }
+
+      function exportPayroll() {
+        const month = parseInt(document.getElementById("pay-month").value);
+        const year = parseInt(document.getElementById("pay-year").value);
+        const monthNames = [
+          "",
+          "يناير",
+          "فبراير",
+          "مارس",
+          "أبريل",
+          "مايو",
+          "يونيو",
+          "يوليو",
+          "أغسطس",
+          "سبتمبر",
+          "أكتوبر",
+          "نوفمبر",
+          "ديسمبر",
+        ];
+        const monthStr = `${year}-${String(month).padStart(2, "0")}`;
+
+        const employees = DB.get("employees") || [];
+        const att = DB.get("attendance") || [];
+        const ot = DB.get("overtime") || [];
+        const settings = DB.get("settings") || {};
+        const workdaysPerWeek = parseInt(settings.workdays) || 5;
+        const daysInMonth = new Date(year, month, 0).getDate();
+        const workDaysInMonth = Math.round((daysInMonth / 7) * workdaysPerWeek);
+
+        let csv = "\uFEFF" + `كشف رواتب شهر ${monthNames[month]} ${year}\n\n`;
+        csv +=
+          "الاسم,القسم,الراتب الأساسي,أيام الحضور,أيام الغياب,خصم الغياب,التأخير,خصم التأخير,الوقت الإضافي,صافي الراتب\n";
+
+        employees.forEach((emp) => {
+          const baseSalary = parseFloat(emp.salary || 0);
+          const dailyRate = baseSalary > 0 ? baseSalary / workDaysInMonth : 0;
+          const empAtt = att.filter(
+            (a) => a.empName === emp.name && a.date.startsWith(monthStr),
+          );
+          const presentDays = empAtt.filter(
+            (a) => a.status === "حاضر" || a.status === "متأخر",
+          ).length;
+          const absentDays = empAtt.filter((a) => a.status === "غائب").length;
+          const lateTimes = empAtt.filter((a) => a.status === "متأخر").length;
+          const absentDeduction = absentDays * dailyRate;
+          const lateDeduction = lateTimes * 20;
+          const empOt = ot.filter(
+            (o) => o.empName === emp.name && o.date.startsWith(monthStr),
+          );
+          const otPay = empOt.reduce(
+            (s, o) => s + parseFloat(o.hours || 0) * parseFloat(o.rate || 0),
+            0,
+          );
+          const netSalary = Math.max(
+            0,
+            baseSalary - absentDeduction - lateDeduction + otPay,
+          );
+          csv += `"${emp.name}","${emp.dept}","${baseSalary}","${presentDays}","${absentDays}","${absentDeduction.toFixed(0)}","${lateTimes}","${lateDeduction.toFixed(0)}","${otPay.toFixed(0)}","${netSalary.toFixed(0)}"
+`;
+        });
+
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `كشف_رواتب_${monthNames[month]}_${year}.csv`;
+        a.click();
+        toast("تم تصدير كشف الرواتب");
       }
 
       // =============================================
