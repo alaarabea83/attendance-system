@@ -176,14 +176,6 @@ body {
   color: var(--dark);
 }
 
-.topbar-date {
-  font-size: 13px;
-  color: var(--gray);
-  background: var(--bg);
-  padding: 6px 14px;
-  border-radius: 20px;
-}
-
 .topbar-right {
   display: flex;
   align-items: center;
@@ -1022,9 +1014,391 @@ select.form-control { cursor: pointer; }
 }
 
 .mini-cal-day.other-month { color: var(--gray-light); }
+
+/* ===== SIDEBAR OVERLAY (mobile) ===== */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 99;
+  backdrop-filter: blur(2px);
+}
+.sidebar-overlay.open { display: block; }
+
+/* ===== HAMBURGER BUTTON ===== */
+.hamburger-btn {
+  display: none;
+  width: 38px; height: 38px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--white);
+  cursor: pointer;
+  align-items: center; justify-content: center;
+  color: var(--dark);
+  flex-direction: column;
+  gap: 5px;
+  padding: 8px;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.hamburger-btn:hover { background: var(--bg); }
+.hamburger-btn span {
+  display: block;
+  width: 18px; height: 2px;
+  background: var(--dark);
+  border-radius: 2px;
+  transition: all 0.3s;
+}
+.hamburger-btn.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.hamburger-btn.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+.hamburger-btn.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* ===== FOOTER ===== */
+.footer {
+  background: var(--white);
+  border-top: 1px solid var(--border);
+  padding: 16px 28px;
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.footer-copy { font-size: 12px; color: var(--gray); }
+.footer-copy span { color: var(--primary); font-weight: 700; }
+.footer-links { display: flex; gap: 16px; }
+.footer-links a {
+  font-size: 12px;
+  color: var(--gray);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.footer-links a:hover { color: var(--primary); }
+.footer-version {
+  font-size: 11px;
+  color: var(--gray-light);
+  background: var(--bg);
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+/* ===== LOGIN PAGE ===== */
+.auth-wrapper {
+  display: none;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%);
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+}
+.auth-wrapper.show { display: flex; }
+
+.auth-bg-circles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.auth-bg-circles span {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.06;
+  background: var(--primary);
+}
+.auth-bg-circles span:nth-child(1) { width: 400px; height: 400px; top: -100px; right: -100px; }
+.auth-bg-circles span:nth-child(2) { width: 300px; height: 300px; bottom: -80px; left: -80px; }
+.auth-bg-circles span:nth-child(3) { width: 200px; height: 200px; top: 50%; left: 50%; transform: translate(-50%,-50%); opacity: 0.04; }
+
+.auth-card {
+  background: var(--white);
+  border-radius: 24px;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.3);
+  overflow: hidden;
+  animation: fadeUp 0.5s ease both;
+}
+
+.auth-header {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  padding: 36px 36px 28px;
+  text-align: center;
+  color: #fff;
+}
+.auth-logo {
+  width: 64px; height: 64px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 18px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px;
+  margin: 0 auto 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+}
+.auth-title { font-size: 22px; font-weight: 900; margin-bottom: 4px; }
+.auth-subtitle { font-size: 13px; opacity: 0.8; }
+
+.auth-body { padding: 32px 36px; }
+.auth-tabs {
+  display: flex;
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  padding: 4px;
+  margin-bottom: 24px;
+}
+.auth-tab {
+  flex: 1;
+  padding: 9px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  font-family: 'Cairo', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gray);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.auth-tab.active { background: var(--white); color: var(--primary); box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+
+.auth-form { display: none; }
+.auth-form.active { display: block; }
+
+.auth-input-wrap {
+  position: relative;
+  margin-bottom: 16px;
+}
+.auth-input-wrap i.input-icon {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--gray);
+  font-size: 15px;
+  pointer-events: none;
+}
+.auth-input-wrap input {
+  width: 100%;
+  padding: 12px 44px 12px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: 'Cairo', sans-serif;
+  font-size: 13.5px;
+  color: var(--dark);
+  outline: none;
+  transition: all 0.2s;
+  background: var(--white);
+}
+.auth-input-wrap input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(26,86,219,0.1);
+}
+.auth-input-wrap input::placeholder { color: var(--gray-light); }
+
+.auth-btn {
+  width: 100%;
+  padding: 13px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: 'Cairo', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.auth-btn:hover { background: var(--primary-dark); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(26,86,219,0.3); }
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0;
+  color: var(--gray-light);
+  font-size: 12px;
+}
+.auth-divider::before, .auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.auth-footer {
+  text-align: center;
+  font-size: 12px;
+  color: var(--gray);
+  padding: 16px 36px 24px;
+  border-top: 1px solid var(--border);
+}
+.auth-footer a { color: var(--primary); font-weight: 700; cursor: pointer; text-decoration: none; }
+
+.auth-alert {
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  margin-bottom: 14px;
+  display: none;
+  align-items: center;
+  gap: 8px;
+}
+.auth-alert.show { display: flex; }
+.auth-alert.success { background: var(--success-light); color: #065f46; }
+.auth-alert.error { background: var(--danger-light); color: #991b1b; }
+
+/* ===== FIREBASE CONFIG MODAL ===== */
+.firebase-banner {
+  background: linear-gradient(135deg, var(--warning-light), #fef9c3);
+  border: 1.5px solid var(--warning);
+  border-radius: var(--radius-sm);
+  padding: 14px 18px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.firebase-banner i { color: var(--warning); margin-top: 2px; flex-shrink: 0; }
+.firebase-banner p { font-size: 13px; color: #78350f; line-height: 1.6; }
+.firebase-banner strong { font-weight: 700; }
+.firebase-banner code {
+  background: rgba(0,0,0,0.08);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: monospace;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1024px) {
+  .sidebar { transform: translateX(100%); }
+  .sidebar.open { transform: translateX(0); box-shadow: -8px 0 32px rgba(0,0,0,0.2); }
+  .main { margin-right: 0; }
+  .hamburger-btn { display: flex; }
+  .topbar-title { display: none; }
+}
+
+@media (max-width: 768px) {
+  .topbar { padding: 0 14px; height: 56px; }
+  .page { padding: 14px; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .clock-time { font-size: 38px; }
+  .clock-actions { flex-direction: column; align-items: center; gap: 8px; }
+  .clock-btn { width: 200px; justify-content: center; }
+  .quick-actions { grid-template-columns: repeat(2, 1fr); }
+  .page-header { flex-direction: column; align-items: flex-start; }
+  .filter-bar { flex-direction: column; align-items: stretch; }
+  .filter-bar .search-bar { width: 100% !important; }
+  .filter-bar .form-control { width: 100% !important; }
+  .footer { padding: 14px 16px; flex-direction: column; align-items: center; text-align: center; gap: 8px; }
+  .footer-links { flex-wrap: wrap; justify-content: center; }
+  /* Dashboard 2-col → 1-col */
+  #page-dashboard > div[style*="grid-template-columns:1fr 340px"] {
+    display: block !important;
+  }
+  /* Settings 2-col → 1-col */
+  #page-settings > div[style*="grid-template-columns:1fr 1fr"] {
+    display: block !important;
+  }
+  #page-settings > div[style*="grid-template-columns:1fr 1fr"] > .card {
+    margin-bottom: 16px;
+  }
+  .topbar-user .user-info { display: none; }
+  .report-summary { grid-template-columns: repeat(3,1fr); }
+  .auth-body { padding: 24px 20px; }
+  .auth-header { padding: 28px 20px 22px; }
+  .auth-footer { padding: 14px 20px 20px; }
+}
+
+@media (max-width: 480px) {
+  .stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stat-card { padding: 14px; }
+  .stat-value { font-size: 22px; }
+  .stat-icon { width: 40px; height: 40px; font-size: 18px; }
+  .clock-time { font-size: 32px; }
+  table { font-size: 12px; }
+  thead th, tbody td { padding: 10px 10px; }
+  .topbar-btn:last-of-type { display: none; }
+  .page { padding: 10px; }
+}
 </style>
 </head>
 <body class="colors">
+
+<!-- ===== AUTH PAGE ===== -->
+<div class="auth-wrapper show" id="auth-wrapper">
+  <div class="auth-bg-circles"><span></span><span></span><span></span></div>
+  <div class="auth-card">
+    <div class="auth-header">
+      <div class="auth-logo"><i class="fas fa-fingerprint"></i></div>
+      <div class="auth-title">نظام الحضور والانصراف</div>
+      <div class="auth-subtitle">تسجيل الدخول لإدارة الحضور</div>
+    </div>
+    <div class="auth-body">
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">تسجيل الدخول</button>
+        <button class="auth-tab" id="tab-register" onclick="switchAuthTab('register')">إنشاء حساب</button>
+      </div>
+      <div class="auth-alert" id="auth-alert"><i class="fas fa-circle-info"></i> <span id="auth-alert-msg"></span></div>
+      <!-- LOGIN -->
+      <div class="auth-form active" id="form-login">
+        <div class="auth-input-wrap">
+          <i class="fas fa-envelope input-icon"></i>
+          <input type="email" id="login-email" placeholder="البريد الإلكتروني">
+        </div>
+        <div class="auth-input-wrap">
+          <i class="fas fa-lock input-icon"></i>
+          <input type="password" id="login-pass" placeholder="كلمة المرور">
+        </div>
+        <button class="auth-btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> دخول</button>
+        <div class="auth-divider">أو</div>
+        <button class="auth-btn" onclick="doDemo()" style="background:var(--dark2);"><i class="fas fa-eye"></i> تجربة بدون تسجيل</button>
+      </div>
+      <!-- REGISTER -->
+      <div class="auth-form" id="form-register">
+        <div class="auth-input-wrap">
+          <i class="fas fa-user input-icon"></i>
+          <input type="text" id="reg-name" placeholder="الاسم الكامل">
+        </div>
+        <div class="auth-input-wrap">
+          <i class="fas fa-building input-icon"></i>
+          <input type="text" id="reg-company" placeholder="اسم المؤسسة / الشركة">
+        </div>
+        <div class="auth-input-wrap">
+          <i class="fas fa-envelope input-icon"></i>
+          <input type="email" id="reg-email" placeholder="البريد الإلكتروني">
+        </div>
+        <div class="auth-input-wrap">
+          <i class="fas fa-lock input-icon"></i>
+          <input type="password" id="reg-pass" placeholder="كلمة المرور (6 أحرف على الأقل)">
+        </div>
+        <div class="auth-input-wrap">
+          <i class="fas fa-lock input-icon"></i>
+          <input type="password" id="reg-pass2" placeholder="تأكيد كلمة المرور">
+        </div>
+        <button class="auth-btn" onclick="doRegister()"><i class="fas fa-user-plus"></i> إنشاء الحساب</button>
+      </div>
+      <div class="firebase-banner" style="margin-top:20px;">
+        <i class="fas fa-fire"></i>
+        <p><strong>Firebase غير مُفعَّل بعد</strong> — النظام يعمل بـ localStorage. لتفعيل المصادقة الحقيقية: <strong>الإعدادات ← إعداد Firebase</strong>.</p>
+      </div>
+    </div>
+    <div class="auth-footer">
+      <a onclick="switchAuthTab('register')">إنشاء حساب جديد</a> &nbsp;|&nbsp;
+      <a onclick="doDemo()">تجربة سريعة بدون تسجيل</a>
+    </div>
+  </div>
+</div>
+
+<!-- SIDEBAR OVERLAY (mobile) -->
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
 
 <!-- SIDEBAR -->
 <nav class="sidebar" id="sidebar">
@@ -1052,7 +1426,7 @@ select.form-control { cursor: pointer; }
       <i class="fas fa-calendar-alt"></i> الإجازات والغياب
     </div>
     <div class="nav-item" onclick="showPage('reports')">
-      <i class="fas fa-file-chart-column"></i> التقارير
+      <i class="fas fa-chart-bar"></i> التقارير
     </div>
     <div class="nav-item" onclick="showPage('overtime')">
       <i class="fas fa-hourglass-half"></i> الوقت الإضافي
@@ -1080,8 +1454,11 @@ select.form-control { cursor: pointer; }
   <!-- TOPBAR -->
   <header class="topbar">
     <div class="topbar-left">
+      <!-- Hamburger (mobile only) -->
+      <button class="hamburger-btn" id="hamburger-btn" onclick="toggleSidebar()">
+        <span></span><span></span><span></span>
+      </button>
       <div class="topbar-title" id="page-title">لوحة التحكم</div>
-      <div class="topbar-date" id="topbar-date">-</div>
     </div>
     <div class="topbar-right">
       <button class="topbar-btn" onclick="showPage('notifications')" title="الإشعارات">
@@ -1091,10 +1468,13 @@ select.form-control { cursor: pointer; }
       <button class="topbar-btn" title="تحديث" onclick="refreshData()">
         <i class="fas fa-rotate-right"></i>
       </button>
+      <button class="topbar-btn" title="تسجيل الخروج" onclick="doLogout()" style="color:var(--danger);">
+        <i class="fas fa-sign-out-alt"></i>
+      </button>
       <div class="topbar-user">
-        <div class="user-avatar">م</div>
+        <div class="user-avatar" id="topbar-avatar">م</div>
         <div class="user-info">
-          <div class="name">المدير العام</div>
+          <div class="name" id="topbar-username">المدير العام</div>
           <div class="role">مدير النظام</div>
         </div>
       </div>
@@ -1593,6 +1973,51 @@ select.form-control { cursor: pointer; }
       </div>
 
       <div class="card">
+        <div class="card-header"><div class="card-title"><i class="fas fa-fire" style="color:#f97316;"></i> إعداد Firebase</div></div>
+        <div class="card-body">
+          <div class="firebase-banner" style="margin-bottom:20px;">
+            <i class="fas fa-circle-info"></i>
+            <p>لتفعيل المصادقة الحقيقية وحفظ البيانات على السحابة، أدخل بيانات مشروع Firebase من <strong>Firebase Console → Project Settings → SDK</strong>.</p>
+          </div>
+          <div class="form-grid">
+            <div class="form-group" style="grid-column:1/-1;">
+              <label>API Key</label>
+              <input type="text" class="form-control" id="fb-api-key" placeholder="AIzaSy...">
+            </div>
+            <div class="form-group" style="grid-column:1/-1;">
+              <label>Auth Domain</label>
+              <input type="text" class="form-control" id="fb-auth-domain" placeholder="your-project.firebaseapp.com">
+            </div>
+            <div class="form-group" style="grid-column:1/-1;">
+              <label>Project ID</label>
+              <input type="text" class="form-control" id="fb-project-id" placeholder="your-project-id">
+            </div>
+            <div class="form-group" style="grid-column:1/-1;">
+              <label>Storage Bucket</label>
+              <input type="text" class="form-control" id="fb-storage" placeholder="your-project.appspot.com">
+            </div>
+            <div class="form-group" style="grid-column:1/-1;">
+              <label>Messaging Sender ID</label>
+              <input type="text" class="form-control" id="fb-sender" placeholder="123456789">
+            </div>
+            <div class="form-group" style="grid-column:1/-1;">
+              <label>App ID</label>
+              <input type="text" class="form-control" id="fb-app-id" placeholder="1:123456789:web:abc...">
+            </div>
+          </div>
+          <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="btn btn-primary" onclick="saveFirebaseConfig()"><i class="fas fa-floppy-disk"></i> حفظ إعدادات Firebase</button>
+            <button class="btn btn-gray" onclick="testFirebase()"><i class="fas fa-plug"></i> اختبار الاتصال</button>
+            <button class="btn btn-outline" onclick="clearFirebaseConfig()"><i class="fas fa-trash"></i> مسح الإعدادات</button>
+          </div>
+          <div class="alert alert-info" style="margin-top:16px;display:flex;align-items:center;gap:8px;" id="fb-status-box">
+            <i class="fas fa-circle" style="font-size:10px;"></i>
+            <span id="fb-status-text">الوضع: localStorage (لا يوجد Firebase)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
         <div class="card-header"><div class="card-title"><i class="fas fa-database"></i> البيانات</div></div>
         <div class="card-body">
           <div class="alert alert-warning"><i class="fas fa-triangle-exclamation"></i> احذر عند حذف البيانات — لا يمكن التراجع</div>
@@ -1860,6 +2285,30 @@ select.form-control { cursor: pointer; }
 <!-- Toast Container -->
 <div id="toast-container"></div>
 
+<script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-analytics.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyAlS6_wOTnl5qOC-tTkpPH214eHiZJba3c",
+    authDomain: "attendance-system-152d1.firebaseapp.com",
+    projectId: "attendance-system-152d1",
+    storageBucket: "attendance-system-152d1.firebasestorage.app",
+    messagingSenderId: "109469993764",
+    appId: "1:109469993764:web:6f48b9be7171556caf81b1",
+    measurementId: "G-B6CS9M9W6S"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+</script>
+
 <script>
 // =============================================
 //  DATA LAYER — localStorage
@@ -1951,7 +2400,6 @@ function startClock() {
     const date = now.toLocaleDateString('ar-SA', {weekday:'long',year:'numeric',month:'long',day:'numeric'});
     document.getElementById('live-clock').textContent = time;
     document.getElementById('live-date').textContent = date;
-    document.getElementById('topbar-date').textContent = now.toLocaleDateString('ar-SA',{year:'numeric',month:'short',day:'numeric'});
   }
   tick();
   setInterval(tick, 1000);
@@ -2624,6 +3072,8 @@ function renderSettings() {
       <span style="font-weight:600;">${d}</span>
       <button class="btn btn-danger btn-sm btn-icon" onclick="removeDept(${i})"><i class="fas fa-trash"></i></button>
     </div>`).join('');
+
+  renderFirebaseSettings();
 }
 
 function saveSettings() {
@@ -2833,11 +3283,197 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
 });
 
 // =============================================
+//  SIDEBAR MOBILE TOGGLE
+// =============================================
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  const btn = document.getElementById('hamburger-btn');
+  const isOpen = sidebar.classList.toggle('open');
+  overlay.classList.toggle('open', isOpen);
+  btn.classList.toggle('open', isOpen);
+}
+
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('open');
+  document.getElementById('hamburger-btn').classList.remove('open');
+}
+
+// Auto-close sidebar on nav click (mobile)
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    if (window.innerWidth <= 1024) closeSidebar();
+  });
+});
+
+// =============================================
+//  AUTH FUNCTIONS
+// =============================================
+function switchAuthTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.getElementById('form-' + tab).classList.add('active');
+  hideAuthAlert();
+}
+
+function showAuthAlert(msg, type='error') {
+  const el = document.getElementById('auth-alert');
+  const icon = type === 'success' ? 'fas fa-circle-check' : 'fas fa-circle-xmark';
+  el.innerHTML = `<i class="${icon}"></i> <span>${msg}</span>`;
+  el.className = `auth-alert show ${type}`;
+}
+
+function hideAuthAlert() {
+  document.getElementById('auth-alert').className = 'auth-alert';
+}
+
+function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  if (!email || !pass) { showAuthAlert('يرجى إدخال البريد الإلكتروني وكلمة المرور'); return; }
+
+  // Check Firebase config
+  const fbCfg = DB.get('firebase_config');
+  if (fbCfg && fbCfg.apiKey) {
+    showAuthAlert('Firebase مُفعَّل — سيتم ربط المصادقة قريباً', 'success');
+    setTimeout(() => enterApp(email, email.split('@')[0]), 1500);
+    return;
+  }
+
+  // localStorage auth
+  const users = DB.get('users') || [];
+  const user = users.find(u => u.email === email && u.pass === btoa(pass));
+  if (!user) { showAuthAlert('البريد الإلكتروني أو كلمة المرور غير صحيحة'); return; }
+  DB.set('current_user', { name: user.name, email: user.email, company: user.company });
+  enterApp(user.name, user.email);
+}
+
+function doRegister() {
+  const name = document.getElementById('reg-name').value.trim();
+  const company = document.getElementById('reg-company').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const pass = document.getElementById('reg-pass').value;
+  const pass2 = document.getElementById('reg-pass2').value;
+  if (!name || !email || !pass) { showAuthAlert('يرجى ملء جميع الحقول المطلوبة'); return; }
+  if (pass.length < 6) { showAuthAlert('كلمة المرور يجب أن تكون 6 أحرف على الأقل'); return; }
+  if (pass !== pass2) { showAuthAlert('كلمة المرور وتأكيدها غير متطابقتين'); return; }
+
+  const users = DB.get('users') || [];
+  if (users.find(u => u.email === email)) { showAuthAlert('هذا البريد الإلكتروني مسجل بالفعل'); return; }
+
+  users.push({ name, email, company: company||'—', pass: btoa(pass) });
+  DB.set('users', users);
+  DB.set('current_user', { name, email, company: company||'—' });
+  showAuthAlert('تم إنشاء الحساب بنجاح!', 'success');
+  setTimeout(() => enterApp(name, email), 1000);
+}
+
+function doDemo() {
+  DB.set('current_user', { name: 'المدير العام', email: 'demo@system.com', company: 'شركتنا للتطوير' });
+  enterApp('المدير العام', 'demo@system.com');
+}
+
+function enterApp(name, email) {
+  document.getElementById('auth-wrapper').classList.remove('show');
+  document.getElementById('topbar-username').textContent = name;
+  document.getElementById('topbar-avatar').textContent = name[0] || 'م';
+  toast('مرحباً ' + name + '!');
+}
+
+function doLogout() {
+  if (!confirm('هل تريد تسجيل الخروج؟')) return;
+  DB.set('current_user', null);
+  document.getElementById('auth-wrapper').classList.add('show');
+  hideAuthAlert();
+  closeSidebar();
+}
+
+// Check if user is already logged in
+function checkAuth() {
+  const user = DB.get('current_user');
+  if (user && user.name) {
+    enterApp(user.name, user.email);
+  }
+}
+
+// =============================================
+//  FIREBASE SETTINGS
+// =============================================
+function renderFirebaseSettings() {
+  const cfg = DB.get('firebase_config') || {};
+  ['api-key','auth-domain','project-id','storage','sender','app-id'].forEach(k => {
+    const el = document.getElementById('fb-' + k);
+    const key = k.replace(/-([a-z])/g, (_,c) => c.toUpperCase());
+    if (el && cfg[key]) el.value = cfg[key];
+  });
+  updateFirebaseStatus();
+}
+
+function saveFirebaseConfig() {
+  const cfg = {
+    apiKey: document.getElementById('fb-api-key').value.trim(),
+    authDomain: document.getElementById('fb-auth-domain').value.trim(),
+    projectId: document.getElementById('fb-project-id').value.trim(),
+    storageBucket: document.getElementById('fb-storage').value.trim(),
+    messagingSenderId: document.getElementById('fb-sender').value.trim(),
+    appId: document.getElementById('fb-app-id').value.trim(),
+  };
+  if (!cfg.apiKey || !cfg.projectId) { toast('يرجى إدخال API Key و Project ID على الأقل','warning'); return; }
+  DB.set('firebase_config', cfg);
+  toast('تم حفظ إعدادات Firebase — ستُطبَّق عند الإعادة التشغيل');
+  updateFirebaseStatus();
+}
+
+function testFirebase() {
+  const cfg = DB.get('firebase_config');
+  if (!cfg || !cfg.apiKey) { toast('لا توجد إعدادات Firebase محفوظة','warning'); return; }
+  toast('اختبار الاتصال... (يحتاج SDK حقيقي)','info');
+}
+
+function clearFirebaseConfig() {
+  if (!confirm('مسح إعدادات Firebase؟')) return;
+  DB.set('firebase_config', null);
+  ['fb-api-key','fb-auth-domain','fb-project-id','fb-storage','fb-sender','fb-app-id'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  toast('تم مسح إعدادات Firebase');
+  updateFirebaseStatus();
+}
+
+function updateFirebaseStatus() {
+  const cfg = DB.get('firebase_config');
+  const box = document.getElementById('fb-status-box');
+  const txt = document.getElementById('fb-status-text');
+  if (!box || !txt) return;
+  if (cfg && cfg.apiKey) {
+    box.className = 'alert alert-success';
+    txt.textContent = 'الوضع: Firebase مُعدَّل (' + (cfg.projectId||'—') + ') — يحتاج تفعيل SDK';
+  } else {
+    box.className = 'alert alert-info';
+    txt.textContent = 'الوضع: localStorage (لا يوجد Firebase مُعدَّل)';
+  }
+}
+
+// =============================================
 //  INIT
 // =============================================
 initData();
 startClock();
 renderDashboard();
+checkAuth();
 </script>
-</body>
-</html>
+  <!-- ===== FOOTER ===== -->
+  <footer class="footer">
+    <div class="footer-copy">جميع الحقوق محفوظة &copy; 2026 &nbsp;|&nbsp; <span>نظام الحضور والانصراف</span></div>
+    <div class="footer-links">
+      <a onclick="showPage('settings')"><i class="fas fa-gear" style="margin-left:4px;font-size:11px;"></i>الإعدادات</a>
+      <a onclick="showPage('reports')"><i class="fas fa-chart-bar" style="margin-left:4px;font-size:11px;"></i>التقارير</a>
+      <a onclick="doLogout()"><i class="fas fa-sign-out-alt" style="margin-left:4px;font-size:11px;color:var(--danger);"></i>تسجيل الخروج</a>
+    </div>
+    <div class="footer-version">v1.0.0 — localStorage Mode</div>
+  </footer>
+
+</div><!-- /.main -->
