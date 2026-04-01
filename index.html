@@ -1440,7 +1440,7 @@ select.form-control { cursor: pointer; }
       <i class="fas fa-calendar-alt"></i> الإجازات والغياب
     </div>
     <div class="nav-item" data-page="reports" onclick="showPage('reports')">
-      <i class="fas fa-file-chart-column"></i> التقارير
+      <i class="fas fa-chart-bar"></i> التقارير
     </div>
     <div class="nav-item" data-page="overtime" onclick="showPage('overtime')">
       <i class="fas fa-hourglass-half"></i> الوقت الإضافي
@@ -1979,28 +1979,6 @@ select.form-control { cursor: pointer; }
       </div>
  
       <div class="card">
-        <div class="card-header"><div class="card-title"><i class="fas fa-fire" style="color:#f97316;"></i> حالة Firebase</div></div>
-        <div class="card-body">
-          <div class="alert alert-info" id="fb-status-box" style="margin-bottom:16px;">
-            <i class="fas fa-circle" style="font-size:10px;"></i>
-            <span id="fb-status-text">جاري التحقق...</span>
-          </div>
-          <div style="background:var(--bg);border-radius:var(--radius-sm);padding:16px;">
-            <div style="font-size:13px;font-weight:700;color:var(--dark2);margin-bottom:10px;"><i class="fas fa-code" style="color:var(--primary);margin-left:6px;"></i>إعداد Firebase</div>
-            <p style="font-size:13px;color:var(--gray);line-height:1.8;">
-              إعدادات Firebase مدمجة مباشرةً في كود النظام.
-              لتغيير مشروع Firebase، عدّل متغير
-              <code style="background:var(--border);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:12px;">FIREBASE_CONFIG</code>
-              في أول سطور الـ JavaScript.
-            </p>
-          </div>
-          <div style="margin-top:16px;">
-            <button class="btn btn-gray" onclick="testFirebaseConnection()"><i class="fas fa-plug"></i> اختبار الاتصال</button>
-          </div>
-        </div>
-      </div>
- 
-      <div class="card">
         <div class="card-header"><div class="card-title"><i class="fas fa-database"></i> البيانات</div></div>
         <div class="card-body">
           <div class="alert alert-warning"><i class="fas fa-triangle-exclamation"></i> احذر عند حذف البيانات — لا يمكن التراجع</div>
@@ -2161,7 +2139,7 @@ select.form-control { cursor: pointer; }
       <a onclick="showPage('reports')"><i class="fas fa-chart-bar" style="margin-left:4px;font-size:11px;"></i>التقارير</a>
       <a onclick="doLogout()"><i class="fas fa-sign-out-alt" style="margin-left:4px;font-size:11px;color:var(--danger);"></i>تسجيل الخروج</a>
     </div>
-    <div class="footer-version">v1.0.0 — localStorage Mode</div>
+    <div class="footer-version">v1.0.0 — developed by: AlaaRabea</div>
   </footer>
 </div><!-- /.main -->
 <!-- ===== MODALS ===== -->
@@ -3798,15 +3776,6 @@ function checkAuth() {
 // =============================================
 function renderFirebaseSettings() {
   updateFirebaseStatus();
-}
- 
-function testFirebaseConnection() {
-  if (FIREBASE_ENABLED) {
-    toast('Firebase مُعدَّل في الكود — جاري اختبار الاتصال...', 'info');
-    // ضع هنا منطق اختبار الاتصال الفعلي مع Firebase SDK
-  } else {
-    toast('Firebase غير مُعدَّل — النظام يعمل بـ localStorage', 'warning');
-  }
 }
  
 function updateFirebaseStatus() {
