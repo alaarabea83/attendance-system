@@ -3676,7 +3676,7 @@
         <a onclick="doLogout()"><i class="fas fa-sign-out-alt"
             style="margin-left:4px;font-size:11px;color:var(--danger);"></i>تسجيل الخروج</a>
       </div>
-      <div class="footer-version">v2.0.0 — Multi Company + Roles</div>
+      <div class="footer-version">Developed By: AlaaRabea</div>
     </footer>
   </div><!-- /.main -->
   <!-- ===== MODALS ===== -->
@@ -4163,54 +4163,16 @@
     // =============================================
     function initData() {
       if (!DB.get('initialized')) {
-        const depts = ['الإدارة', 'تقنية المعلومات', 'المحاسبة', 'المبيعات', 'الموارد البشرية'];
-        DB.set('departments', depts);
-
-        const employees = [
-          { name: 'أحمد محمد علي', job: 'مدير تقنية المعلومات', dept: 'تقنية المعلومات', shift: 'صباحي', leaveBalance: 21, phone: '+966 55 111 2222', email: 'ahmed@company.com', hireDate: '2022-01-15', color: '#3b82f6' },
-          { name: 'سارة عبدالله', job: 'محاسبة أولى', dept: 'المحاسبة', shift: 'صباحي', leaveBalance: 18, phone: '+966 55 333 4444', email: 'sara@company.com', hireDate: '2021-06-01', color: '#10b981' },
-          { name: 'خالد ناصر', job: 'مندوب مبيعات', dept: 'المبيعات', shift: 'صباحي', leaveBalance: 15, phone: '+966 55 555 6666', email: 'khaled@company.com', hireDate: '2023-03-10', color: '#f59e0b' },
-          { name: 'نورة الحربي', job: 'أخصائية موارد بشرية', dept: 'الموارد البشرية', shift: 'مسائي', leaveBalance: 21, phone: '+966 55 777 8888', email: 'nora@company.com', hireDate: '2020-09-20', color: '#8b5cf6' },
-          { name: 'فيصل الغامدي', job: 'مطور برمجيات', dept: 'تقنية المعلومات', shift: 'صباحي', leaveBalance: 14, phone: '+966 55 999 0000', email: 'faisal@company.com', hireDate: '2022-11-05', color: '#ef4444' },
-          { name: 'هنا العتيبي', job: 'مديرة إدارية', dept: 'الإدارة', shift: 'صباحي', leaveBalance: 21, phone: '+966 55 112 2334', email: 'hana@company.com', hireDate: '2019-04-01', color: '#06b6d4' },
-        ];
-        employees.forEach(e => DB.push('employees', e));
-
-        const today = todayStr();
-        const records = [
-          { empName: 'أحمد محمد علي', dept: 'تقنية المعلومات', date: today, checkIn: '07:55', checkOut: '17:10', status: 'حاضر', notes: '' },
-          { empName: 'سارة عبدالله', dept: 'المحاسبة', date: today, checkIn: '09:20', checkOut: '', status: 'متأخر', notes: 'موعد طبي' },
-          { empName: 'خالد ناصر', dept: 'المبيعات', date: today, checkIn: '', checkOut: '', status: 'غائب', notes: '' },
-          { empName: 'نورة الحربي', dept: 'الموارد البشرية', date: today, checkIn: '14:00', checkOut: '', status: 'حاضر', notes: '' },
-          { empName: 'فيصل الغامدي', dept: 'تقنية المعلومات', date: today, checkIn: '08:05', checkOut: '17:00', status: 'حاضر', notes: '' },
-        ];
-        records.forEach(r => DB.push('attendance', r));
-
-        const leaves = [
-          { empName: 'سارة عبدالله', type: 'مرضية', from: '2026-03-25', to: '2026-03-27', days: 3, reason: 'إجازة مرضية', status: 'موافق' },
-          { empName: 'خالد ناصر', type: 'سنوية', from: '2026-04-05', to: '2026-04-10', days: 6, reason: 'إجازة سنوية', status: 'قيد المراجعة' },
-          { empName: 'نورة الحربي', type: 'طارئة', from: '2026-03-28', to: '2026-03-28', days: 1, reason: 'ظروف طارئة', status: 'موافق' },
-        ];
-        leaves.forEach(l => DB.push('leaves', l));
-
-        const overtime = [
-          { empName: 'أحمد محمد علي', date: today, hours: 3, rate: 60, reason: 'إنجاز مشروع' },
-          { empName: 'فيصل الغامدي', date: today, hours: 2, rate: 55, reason: 'صيانة سيرفر' },
-        ];
-        overtime.forEach(o => DB.push('overtime', o));
-
+        DB.set('departments', ['الإدارة', 'تقنية المعلومات', 'المحاسبة', 'المبيعات', 'الموارد البشرية']);
         DB.set('settings', { startTime: '08:00', endTime: '17:00', lateMinutes: 15, workdays: '5' });
-        DB.set('notifications', [
-          { type: 'warning', icon: 'fas fa-triangle-exclamation', title: 'موظف متأخر', text: 'سارة عبدالله تأخرت عن موعد الدوام', time: 'منذ ساعة', read: false },
-          { type: 'danger', icon: 'fas fa-user-xmark', title: 'موظف غائب', text: 'خالد ناصر لم يسجل حضوره اليوم', time: 'منذ 2 ساعة', read: false },
-          { type: 'success', icon: 'fas fa-clock', title: 'وقت إضافي', text: 'أحمد محمد سجل 3 ساعات إضافية', time: 'أمس', read: false },
-          { type: 'info', icon: 'fas fa-calendar', title: 'طلب إجازة جديد', text: 'خالد ناصر طلب إجازة سنوية 5-10 أبريل', time: 'أمس', read: true },
-        ]);
-
+        DB.set('employees', []);
+        DB.set('attendance', []);
+        DB.set('leaves', []);
+        DB.set('overtime', []);
+        DB.set('notifications', []);
         DB.set('initialized', true);
       }
     }
-
 
     function getCurrentCompanyId() {
       return CURRENT_COMPANY_ID || CURRENT_USER_DOC?.companyId || DB.get('current_user')?.companyId || null;
