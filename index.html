@@ -6635,6 +6635,99 @@
       loadEmployeePortalData(user.name);
     }
 
+    async function empRequestLeave() {
+      const user = DB.get('current_user');
+      if (!user) {
+        showEmpToast('يجب تسجيل الدخول أولاً', 'warning');
+        return;
+      }
+
+      const leaveType = document.getElementById('emp-leave-type')?.value || 'سنوية';
+      const from = document.getElementById('emp-leave-from')?.value;
+      const to = document.getElementById('emp-leave-to')?.value;
+      const reason = document.getElementById('emp-leave-reason')?.value?.trim() || '';
+
+      if (!from || !to) {
+        showEmpToast('يرجى اختيار تاريخ البداية والنهاية', 'warning');
+        return;
+      }
+
+      if (new Date(to) < new Date(from)) {
+        showEmpToast('تاريخ النهاية يجب أن يكون بعد تاريخ البداية', 'warning');
+        return;
+      }
+
+      const employees = DB.get('employees') || [];
+      const emp = employees.find(e => e.name === user.name || e.id === user.empId || e.uid === user.uid);
+
+      const oneDay = 24 * 60 * 60 * 1000;
+      const days = Math.floor((new Date(to) - new Date(from)) / oneDay) + 1;
+
+      const leaveRecord = {
+        empId: emp?.id || user.empId || user.uid || '',
+        empName: user.name,
+        dept: emp?.dept || '—',
+        companyId: getCurrentCompanyId(),
+        type: leaveType,
+        from,
+        to,
+        days,
+        reason,
+        status: 'قيد المراجعة',
+        createdBy: 'employee'
+      };
+
+      const localLeave = DB.push('leaves', leaveRecord);
+
+      try {
+        const fsId = await FDB.add(tenantCollection('leaves'), leaveRecord);
+        const arr = DB.get('leaves') || [];
+        const idx = arr.findIndex(r => r.id === localLeave.id);
+        if (idx >= 0) {
+          arr[idx].fsId = fsId;
+          DB.set('leaves', arr);
+        }
+      } catch (e) {
+        console.warn('Firestore leave request save:', e);
+      }
+
+      const notifData = {
+        type: 'info',
+        icon: 'fas fa-calendar-plus',
+        title: 'طلب إجازة جديد',
+        text: `${user.name} طلب إجازة ${leaveType} من ${from} إلى ${to}`,
+        time: 'الآن',
+        read: false,
+        companyId: getCurrentCompanyId()
+      };
+
+      const notifs = DB.get('notifications') || [];
+      notifs.unshift(notifData);
+      DB.set('notifications', notifs);
+
+      try {
+        await FDB.add(tenantCollection('notifications'), notifData);
+      } catch (e) {
+        console.warn('Firestore leave notification save:', e);
+      }
+
+      const fromEl = document.getElementById('emp-leave-from');
+      const toEl = document.getElementById('emp-leave-to');
+      const reasonEl = document.getElementById('emp-leave-reason');
+      const typeEl = document.getElementById('emp-leave-type');
+
+      if (fromEl) fromEl.value = '';
+      if (toEl) toEl.value = '';
+      if (reasonEl) reasonEl.value = '';
+      if (typeEl) typeEl.value = 'سنوية';
+
+      showEmpToast('تم إرسال طلب الإجازة بنجاح', 'success');
+
+      if (typeof loadEmployeePortalData === 'function') {
+        loadEmployeePortalData(user.name);
+      }
+    }
+
     function empLogout() {
       if (!confirm('هل تريد تسجيل الخروج؟')) return;
 
