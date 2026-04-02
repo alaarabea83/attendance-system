@@ -2348,6 +2348,7 @@
     .emp-btn-in {
       background: linear-gradient(135deg, #059669, #10b981);
       color: #fff;
+      cursor: pointer;
       box-shadow: 0 8px 24px rgba(16, 185, 129, 0.35);
     }
 
@@ -2373,6 +2374,7 @@
       cursor: default;
       transform: none !important;
       box-shadow: none !important;
+      cursor: pointer;
     }
 
     .emp-btn-label {
@@ -2629,11 +2631,11 @@
   </style>
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"
-    onerror="window.__firebaseScriptFailed = true"></script>
+    onerror="window.__firebaseScriptFailed=true"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"
-    onerror="window.__firebaseScriptFailed = true"></script>
+    onerror="window.__firebaseScriptFailed=true"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"
-    onerror="window.__firebaseScriptFailed = true"></script>
+    onerror="window.__firebaseScriptFailed=true"></script>
 </head>
 
 <body class="colors">
@@ -2648,7 +2650,7 @@
         <div class="auth-subtitle">مدير أو موظف — ادخل ببياناتك</div>
       </div>
       <div class="auth-body">
-        <div class="auth-tabs" id="auth-tabs-wrapper">
+        <div class="auth-tabs" style="display:none;" id="auth-tabs-wrapper">
           <button class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">تسجيل الدخول</button>
           <button class="auth-tab" id="tab-register" onclick="switchAuthTab('register')">حساب مدير جديد</button>
         </div>
@@ -2721,7 +2723,14 @@
         <i class="fas fa-fingerprint"></i>
         <span>نظام الحضور</span>
       </div>
-      <button class="emp-logout-btn" onclick="empLogout()">
+      <button class="emp-logout-btn" onclick="empLogout()" style="
+    background:#ef4444;
+    color:#fff;
+    border:none;
+    padding:8px 14px;
+    border-radius:8px;
+    cursor:pointer;
+  ">
         <i class="fas fa-sign-out-alt"></i> خروج
       </button>
     </div>
@@ -3427,6 +3436,41 @@
 
         <div class="card">
           <div class="card-header">
+            <div class="card-title"><i class="fas fa-building"></i> إدارة الشركة</div>
+          </div>
+          <div class="card-body">
+            <div class="form-group" style="margin-bottom:14px;">
+              <label>اسم الشركة</label>
+              <input type="text" class="form-control" id="company-name-input" placeholder="اسم الشركة">
+            </div>
+            <div class="form-group" style="margin-bottom:14px;">
+              <label>هاتف الشركة</label>
+              <input type="text" class="form-control" id="company-phone-input" placeholder="رقم الهاتف">
+            </div>
+            <div class="form-group" style="margin-bottom:14px;">
+              <label>عنوان الشركة</label>
+              <input type="text" class="form-control" id="company-address-input" placeholder="العنوان">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+              <div style="background:var(--bg);padding:12px;border-radius:10px;">
+                <div style="font-size:11px;color:var(--gray);margin-bottom:4px;">Company ID</div>
+                <div id="company-id-label" style="font-size:12px;font-weight:700;word-break:break-word;">—</div>
+              </div>
+              <div style="background:var(--bg);padding:12px;border-radius:10px;">
+                <div style="font-size:11px;color:var(--gray);margin-bottom:4px;">Slug</div>
+                <div id="company-slug-label" style="font-size:12px;font-weight:700;word-break:break-word;">—</div>
+              </div>
+            </div>
+            <div style="font-size:12px;font-weight:700;margin-bottom:8px;color:var(--dark2);">ملخص الأدوار داخل الشركة
+            </div>
+            <div id="company-roles-summary" class="report-summary"></div>
+            <button class="btn btn-primary" onclick="saveCompanyProfile()"><i class="fas fa-floppy-disk"></i> حفظ بيانات
+              الشركة</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
             <div class="card-title"><i class="fas fa-fire" style="color:#f97316;"></i> حالة Firebase</div>
           </div>
           <div class="card-body">
@@ -3480,7 +3524,7 @@
           <div class="profile-avatar-lg" id="profile-avatar-lg">م</div>
           <div>
             <div class="profile-name" id="profile-display-name">المدير العام</div>
-            <div class="profile-role">مدير النظام — الإدارة العليا</div>
+            <div class="profile-role"><span id="profile-role-label">مدير النظام</span> — الإدارة العليا</div>
           </div>
         </div>
         <div class="card-body">
@@ -3632,7 +3676,7 @@
         <a onclick="doLogout()"><i class="fas fa-sign-out-alt"
             style="margin-left:4px;font-size:11px;color:var(--danger);"></i>تسجيل الخروج</a>
       </div>
-      <div class="footer-version">v1.0.0 — localStorage Mode</div>
+      <div class="footer-version">v2.0.0 — Multi Company + Roles</div>
     </footer>
   </div><!-- /.main -->
   <!-- ===== MODALS ===== -->
@@ -3717,6 +3761,15 @@
               <option value="صباحي">صباحي</option>
               <option value="مسائي">مسائي</option>
               <option value="ليلي">ليلي</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>الدور / الصلاحية</label>
+            <select class="form-control" id="emp-role">
+              <option value="employee">موظف</option>
+              <option value="manager">مدير</option>
+              <option value="hr">موارد بشرية</option>
+              <option value="viewer">مشاهدة فقط</option>
             </select>
           </div>
           <div class="form-group">
@@ -3988,7 +4041,6 @@
 
     // تهيئة Firebase بشكل آمن حتى لو فشل تحميل الـ SDK
     const FIREBASE_ENABLED = typeof window.firebase !== 'undefined' && !window.__firebaseScriptFailed;
-    const FIREBASE_READY = FIREBASE_ENABLED;
 
     if (FIREBASE_ENABLED && !firebase.apps.length) {
       firebase.initializeApp(FIREBASE_CONFIG);
@@ -4012,35 +4064,27 @@
         authAlert.innerHTML = '<i class="fas fa-triangle-exclamation"></i> <span>فشل تحميل Firebase. تأكد من اتصال الإنترنت أو اسمح بتحميل ملفات gstatic ثم أعد المحاولة.</span>';
         authAlert.className = 'auth-alert show error';
       }
-
-      const statusText = document.getElementById('fb-status-text');
-      const statusBox = document.getElementById('fb-status-box');
-      if (statusText && statusBox) {
-        statusText.textContent = 'فشل تحميل Firebase SDK';
-        statusBox.className = 'alert alert-danger';
-      }
     }
 
     if (!FIREBASE_ENABLED) {
       window.addEventListener('DOMContentLoaded', showFirebaseLoadFailure);
     }
 
+
     // =============================================
-    //  FDB — Firestore Helper (يحل محل DB localStorage)
+    //  FDB — Firestore Helper
     // =============================================
     const FDB = {
-      // ---- Collections ----
-      col: (name) => { if (!db) throw new Error('Firestore غير متاح'); return db.collection(name); },
-
-      // حفظ document بـ ID محدد
-      async set(col, id, data) {
-        if (!db) throw new Error('Firestore غير متاح');
-        await db.collection(col).doc(id).set(data, { merge: true });
+      col(name) {
+        return db.collection(name);
       },
 
-      // إضافة document بـ ID تلقائي، يُعيد ID
+      async set(col, id, data) {
+        await db.collection(col).doc(id).set(data, { merge: true });
+        return id;
+      },
+
       async add(col, data) {
-        if (!db) throw new Error('Firestore غير متاح');
         const ref = await db.collection(col).add({
           ...data,
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -4048,32 +4092,35 @@
         return ref.id;
       },
 
-      // قراءة document
       async get(col, id) {
-        if (!db) throw new Error('Firestore غير متاح');
         const snap = await db.collection(col).doc(id).get();
-        return snap.exists ? { id: snap.id, ...snap.data() } : null;
+        if (!snap.exists) return null;
+        return { id: snap.id, ...snap.data() };
       },
 
-      // قراءة كل collection أو query
       async getAll(col, ...wheres) {
-        if (!db) throw new Error('Firestore غير متاح');
         let ref = db.collection(col);
-        wheres.forEach(([f, op, v]) => { ref = ref.where(f, op, v); });
+        wheres.forEach(condition => {
+          if (Array.isArray(condition) && condition.length === 3 && typeof condition[0] === 'string') {
+            const [field, op, value] = condition;
+            ref = ref.where(field, op, value);
+          }
+        });
         const snap = await ref.get();
         return snap.docs.map(d => ({ id: d.id, ...d.data() }));
       },
 
-      // تحديث document
       async update(col, id, data) {
-        if (!db) throw new Error('Firestore غير متاح');
-        await db.collection(col).doc(id).update(data);
+        await db.collection(col).doc(id).update({
+          ...data,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        return true;
       },
 
-      // حذف document
       async delete(col, id) {
-        if (!db) throw new Error('Firestore غير متاح');
         await db.collection(col).doc(id).delete();
+        return true;
       }
     };
 
@@ -4103,6 +4150,13 @@
     // الـ currentUser من Firebase (يُحدَّث عند onAuthStateChanged)
     let CURRENT_FB_USER = null;
     let CURRENT_USER_DOC = null;
+    let CURRENT_COMPANY_ID = null;
+    let CURRENT_COMPANY_NAME = null;
+
+
+    // =============================================
+    //  BOOT — ينتظر تحميل Firebase SDK ثم يشغّل التطبيق
+    // =============================================
 
     // =============================================
     //  INIT DEFAULT DATA
@@ -4157,6 +4211,187 @@
       }
     }
 
+
+    function getCurrentCompanyId() {
+      return CURRENT_COMPANY_ID || CURRENT_USER_DOC?.companyId || DB.get('current_user')?.companyId || null;
+    }
+
+    function tenantCollection(name) {
+      const cid = getCurrentCompanyId();
+      return cid ? 'companies/' + cid + '/' + name : name;
+    }
+
+    const ROLE_LABELS = {
+      admin: 'مدير النظام',
+      manager: 'مدير',
+      hr: 'موارد بشرية',
+      viewer: 'مشاهدة فقط',
+      employee: 'موظف'
+    };
+
+    const ROLE_PERMISSIONS = {
+      admin: ['dashboard', 'attendance', 'employees', 'leaves', 'reports', 'overtime', 'payroll', 'notifications', 'settings', 'profile'],
+      manager: ['dashboard', 'attendance', 'employees', 'leaves', 'reports', 'overtime', 'notifications', 'profile'],
+      hr: ['dashboard', 'attendance', 'employees', 'leaves', 'reports', 'notifications', 'profile'],
+      viewer: ['dashboard', 'reports', 'notifications', 'profile'],
+      employee: []
+    };
+
+    function getCurrentRole() {
+      return DB.get('current_user')?.role || CURRENT_USER_DOC?.role || 'admin';
+    }
+
+    function roleLabel(role) {
+      return ROLE_LABELS[role] || role || '—';
+    }
+
+    function canAccessPage(pageId) {
+      const role = getCurrentRole();
+      const allowed = ROLE_PERMISSIONS[role] || [];
+      return allowed.includes(pageId);
+    }
+
+    function applyRolePermissions() {
+      const role = getCurrentRole();
+      document.querySelectorAll('.nav-item[data-page]').forEach(item => {
+        const page = item.dataset.page;
+        const allowed = canAccessPage(page);
+        item.style.display = allowed ? '' : 'none';
+      });
+
+      const profileRole = document.getElementById('profile-role-label');
+      if (profileRole) profileRole.textContent = roleLabel(role);
+      const topRole = document.querySelector('.topbar-user .role');
+      if (topRole) topRole.textContent = roleLabel(role);
+    }
+
+    function normalizeCompanyName(name) {
+      return (name || '')
+        .toString()
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, ' ')
+        .replace(/[ـ]/g, '')
+        .normalize('NFKC');
+    }
+
+    function companySlugify(name) {
+      const value = (name || '').toString().trim().toLowerCase();
+      return value
+        .replace(/[^\w\s؀-ۿ-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '') || 'company';
+    }
+
+    async function isCompanyNameTaken(name, excludeCompanyId = null) {
+      const normalized = normalizeCompanyName(name);
+      if (!normalized) return false;
+      try {
+        const companies = await FDB.getAll('companies');
+        return companies.some(c => c.id !== excludeCompanyId && normalizeCompanyName(c.name) === normalized);
+      } catch (e) {
+        console.warn('company name check failed:', e);
+        return false;
+      }
+    }
+
+    async function loadCompanyProfileFromFirestore() {
+      const companyId = getCurrentCompanyId();
+      if (!companyId) return null;
+      try {
+        const company = await FDB.get('companies', companyId);
+        if (company) {
+          DB.set('company_profile', company);
+          return company;
+        }
+      } catch (e) {
+        console.warn('loadCompanyProfile error:', e);
+      }
+      return DB.get('company_profile') || null;
+    }
+
+    async function saveCompanyProfile() {
+      const companyId = getCurrentCompanyId();
+      if (!companyId) {
+        toast('لا توجد شركة مرتبطة بالحساب الحالي', 'danger');
+        return;
+      }
+
+      const name = document.getElementById('company-name-input')?.value.trim();
+      const phone = document.getElementById('company-phone-input')?.value.trim() || '';
+      const address = document.getElementById('company-address-input')?.value.trim() || '';
+      const slug = companySlugify(name);
+
+      if (!name) {
+        toast('أدخل اسم الشركة', 'warning');
+        return;
+      }
+
+      const taken = await isCompanyNameTaken(name, companyId);
+      if (taken) {
+        toast('اسم الشركة مستخدم بالفعل، اختر اسمًا مختلفًا', 'warning');
+        return;
+      }
+
+      const current = DB.get('company_profile') || {};
+      const payload = {
+        ...current,
+        id: companyId,
+        name,
+        normalizedName: normalizeCompanyName(name),
+        slug,
+        phone,
+        address,
+        updatedAt: new Date().toISOString()
+      };
+
+      try {
+        await FDB.set('companies', companyId, payload);
+        DB.set('company_profile', payload);
+
+        const user = DB.get('current_user') || {};
+        DB.set('current_user', { ...user, companyName: name, company: name });
+        CURRENT_COMPANY_NAME = name;
+
+        if (CURRENT_FB_USER?.uid) {
+          await FDB.set('users', CURRENT_FB_USER.uid, { companyName: name });
+        }
+
+        document.getElementById('prof-company').value = name;
+        renderCompanyManagement();
+        toast('تم حفظ بيانات الشركة');
+      } catch (e) {
+        console.warn('saveCompanyProfile error:', e);
+        toast('فشل حفظ بيانات الشركة', 'danger');
+      }
+    }
+
+    function renderCompanyManagement() {
+      const company = DB.get('company_profile') || {};
+      const employees = DB.get('employees') || [];
+      const companyNameEl = document.getElementById('company-name-input');
+      const companyPhoneEl = document.getElementById('company-phone-input');
+      const companyAddressEl = document.getElementById('company-address-input');
+      const companyIdEl = document.getElementById('company-id-label');
+      const companySlugEl = document.getElementById('company-slug-label');
+      const companyRolesSummary = document.getElementById('company-roles-summary');
+
+      if (companyNameEl) companyNameEl.value = company.name || CURRENT_COMPANY_NAME || '';
+      if (companyPhoneEl) companyPhoneEl.value = company.phone || '';
+      if (companyAddressEl) companyAddressEl.value = company.address || '';
+      if (companyIdEl) companyIdEl.textContent = company.id || getCurrentCompanyId() || '—';
+      if (companySlugEl) companySlugEl.textContent = company.slug || companySlugify(company.name || CURRENT_COMPANY_NAME || '');
+
+      if (companyRolesSummary) {
+        const roles = ['admin', 'manager', 'hr', 'viewer', 'employee'];
+        companyRolesSummary.innerHTML = roles.map(role => {
+          const count = employees.filter(e => (e.role || 'employee') === role).length + ((role === 'admin' && getCurrentRole() === 'admin') ? 1 : 0);
+          return `<div class="report-box"><div class="val">${count}</div><div class="lbl">${roleLabel(role)}</div></div>`;
+        }).join('');
+      }
+    }
+
     function todayStr() {
       return new Date().toISOString().slice(0, 10);
     }
@@ -4194,6 +4429,13 @@
     };
 
     function showPage(id) {
+      if (!canAccessPage(id)) {
+        toast('ليس لديك صلاحية للوصول إلى هذه الصفحة', 'warning');
+        const fallback = (ROLE_PERMISSIONS[getCurrentRole()] || [])[0] || 'profile';
+        if (id !== fallback) return showPage(fallback);
+        return;
+      }
+
       // Hide all pages
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
       // Show target page
@@ -4523,17 +4765,30 @@
       document.getElementById('modal-edit-attendance').classList.add('open');
     }
 
-    function saveEditAttendance() {
+    async function saveEditAttendance() {
       const id = document.getElementById('edit-att-id').value;
-      DB.update('attendance', id, {
+      const arr = DB.get('attendance') || [];
+      const oldRow = arr.find(a => a.id === id);
+
+      const updates = {
         checkIn: document.getElementById('edit-att-in').value,
         checkOut: document.getElementById('edit-att-out').value,
         status: document.getElementById('edit-att-status').value,
-        notes: document.getElementById('edit-att-notes').value,
-      });
+        notes: document.getElementById('edit-att-notes').value
+      };
+
+      DB.update('attendance', id, updates);
+
+      try {
+        const fireId = oldRow?.fsId || (oldRow?.id?.length > 15 ? oldRow.id : null);
+        if (fireId) await FDB.update(tenantCollection('attendance'), fireId, updates);
+      } catch (e) {
+        console.warn('Firestore attendance update:', e);
+      }
+
       closeModal('modal-edit-attendance');
-      toast('تم تعديل السجل بنجاح');
-      renderPage(document.querySelector('.page.active').id.replace('page-', ''));
+      toast('تم حفظ التعديلات');
+      renderPage(document.querySelector('.page.active')?.id?.replace('page-', '') || 'attendance');
     }
 
     // =============================================
@@ -4580,7 +4835,7 @@
             <span style="font-size:12px;font-weight:700;">${pct}%</span>
           </div>
         </td>
-        <td><span class="badge badge-success"><i class="fas fa-circle" style="font-size:8px;"></i> نشط</span></td>
+        <td><span class="badge badge-success"><i class="fas fa-circle" style="font-size:8px;"></i> ${roleLabel(e.role || 'employee')}</span></td>
         <td>
           <div style="display:flex;gap:6px;">
             <button class="btn btn-outline btn-sm btn-icon" onclick="viewEmployee('${e.id}')" title="عرض"><i class="fas fa-eye"></i></button>
@@ -4623,6 +4878,7 @@
       <div><div style="font-size:11px;color:var(--gray);font-weight:600;margin-bottom:4px;">البريد</div><div style="font-weight:700;">${emp.email || '—'}</div></div>
       <div><div style="font-size:11px;color:var(--gray);font-weight:600;margin-bottom:4px;">تاريخ التعيين</div><div style="font-weight:700;">${emp.hireDate || '—'}</div></div>
       <div><div style="font-size:11px;color:var(--gray);font-weight:600;margin-bottom:4px;">رصيد الإجازة</div><div style="font-weight:700;color:var(--success);">${emp.leaveBalance} يوم</div></div>
+      <div><div style="font-size:11px;color:var(--gray);font-weight:600;margin-bottom:4px;">الدور</div><div style="font-weight:700;">${roleLabel(emp.role || 'employee')}</div></div>
     </div>
     <div style="background:var(--bg);border-radius:10px;padding:16px;">
       <div style="font-size:13px;font-weight:700;margin-bottom:10px;">إحصائيات الحضور</div>
@@ -4944,18 +5200,25 @@
         </div>`).join('');
 
       renderFirebaseSettings();
+      renderCompanyManagement();
     }
 
     function saveSettings() {
       const s = {
         startTime: document.getElementById('set-start').value,
         endTime: document.getElementById('set-end').value,
-        lateMinutes: parseInt(document.getElementById('set-late').value),
+        lateMinutes: parseInt(document.getElementById('set-late').value) || 15,
         workdays: document.getElementById('set-workdays').value
       };
+
       DB.set('settings', s);
-      FDB.set('settings', 'main', s).catch(e => console.warn('settings save:', e));
-      toast('تم حفظ الإعدادات بنجاح');
+
+      FDB.set(tenantCollection('settings'), 'main', s)
+        .then(() => toast('تم حفظ الإعدادات بنجاح'))
+        .catch(e => {
+          console.warn('settings save:', e);
+          toast('تم الحفظ محليًا، لكن فشل الحفظ على Firestore', 'warning');
+        });
     }
 
     function toggleSetting(id) {
@@ -4965,24 +5228,51 @@
 
     function addDept() {
       const val = document.getElementById('new-dept').value.trim();
-      if (!val) { toast('أدخل اسم القسم', 'warning'); return; }
+      if (!val) {
+        toast('أدخل اسم القسم', 'warning');
+        return;
+      }
+
       const depts = DB.get('departments') || [];
-      if (depts.includes(val)) { toast('القسم موجود بالفعل', 'warning'); return; }
+      if (depts.includes(val)) {
+        toast('القسم موجود بالفعل', 'warning');
+        return;
+      }
+
       depts.push(val);
       DB.set('departments', depts);
-      FDB.set('settings', 'departments', { list: depts }).catch(e => console.warn('dept save:', e));
-      document.getElementById('new-dept').value = '';
-      renderSettings();
-      toast('تم إضافة القسم بنجاح');
+
+      FDB.set(tenantCollection('settings'), 'departments', { items: depts })
+        .then(() => {
+          document.getElementById('new-dept').value = '';
+          renderSettings();
+          toast('تمت إضافة القسم بنجاح');
+        })
+        .catch(e => {
+          console.warn('dept save:', e);
+          document.getElementById('new-dept').value = '';
+          renderSettings();
+          toast('تمت الإضافة محليًا، لكن فشل الحفظ على Firestore', 'warning');
+        });
     }
 
     function removeDept(i) {
       if (!confirm('هل تريد حذف هذا القسم؟')) return;
+
       const depts = DB.get('departments') || [];
       depts.splice(i, 1);
       DB.set('departments', depts);
-      renderSettings();
-      toast('تم حذف القسم', 'warning');
+
+      FDB.set(tenantCollection('settings'), 'departments', { items: depts })
+        .then(() => {
+          renderSettings();
+          toast('تم حذف القسم', 'warning');
+        })
+        .catch(e => {
+          console.warn('dept remove save:', e);
+          renderSettings();
+          toast('تم الحذف محليًا، لكن فشل الحفظ على Firestore', 'warning');
+        });
     }
 
     function exportData() {
@@ -5018,9 +5308,11 @@
       if (user) {
         document.getElementById('prof-name').value = user.name || '';
         document.getElementById('prof-email').value = user.email || '';
-        document.getElementById('prof-company').value = user.company || '';
+        document.getElementById('prof-company').value = user.companyName || user.company || '';
         document.getElementById('profile-display-name').textContent = user.name || 'المدير العام';
         document.getElementById('profile-avatar-lg').textContent = (user.name || 'م')[0];
+        const roleEl = document.getElementById('profile-role-label');
+        if (roleEl) roleEl.textContent = roleLabel(user.role);
       }
     }
 
@@ -5031,7 +5323,7 @@
       const company = document.getElementById('prof-company').value.trim();
 
       const user = DB.get('current_user') || {};
-      DB.set('current_user', { ...user, name, email, phone, company });
+      DB.set('current_user', { ...user, name, email, phone, company, companyName: company });
 
       // Update topbar
       document.getElementById('topbar-username').textContent = name;
@@ -5072,71 +5364,86 @@
     // =============================================
     //  SAVE FUNCTIONS
     // =============================================
-    function saveAttendance() {
+    async function saveAttendance() {
       const empId = document.getElementById('att-emp').value;
-      const date = document.getElementById('att-date').value;
+      const date = document.getElementById('att-date').value || todayStr();
       const status = document.getElementById('att-status').value;
 
-      if (!empId || !date) { toast('يرجى ملء الحقول المطلوبة', 'warning'); return; }
+      if (!empId || !date) {
+        toast('يرجى ملء الحقول المطلوبة', 'warning');
+        return;
+      }
 
       const employees = DB.get('employees') || [];
       const emp = employees.find(e => e.id === empId);
-      if (!emp) { toast('لم يتم العثور على الموظف', 'danger'); return; }
+      if (!emp) {
+        toast('الموظف غير موجود', 'danger');
+        return;
+      }
 
       const checkIn = document.getElementById('att-in').value;
+      const checkOut = document.getElementById('att-out').value;
+      const notes = document.getElementById('att-notes').value || '';
+
       const settings = DB.get('settings') || {};
       const startTime = settings.startTime || '08:00';
-      const lateMinutes = settings.lateMinutes || 15;
+      const lateMinutes = parseInt(settings.lateMinutes) || 15;
 
-      // Auto-detect late if checkIn is provided and no status chosen
       let finalStatus = status;
       if (status === 'حاضر' && checkIn) {
         const [sh, sm] = startTime.split(':').map(Number);
         const [ih, im] = checkIn.split(':').map(Number);
-        const diffMins = (ih * 60 + im) - (sh * 60 + sm);
-        if (diffMins > lateMinutes) finalStatus = 'متأخر';
+        if ((ih * 60 + im) - (sh * 60 + sm) > lateMinutes) {
+          finalStatus = 'متأخر';
+        }
       }
 
       const record = {
-        empId, empName: emp.name, dept: emp.dept,
+        empId: emp.id,
+        empName: emp.name,
+        dept: emp.dept,
+        companyId: getCurrentCompanyId(),
         date,
         checkIn,
-        checkOut: document.getElementById('att-out').value,
+        checkOut,
         status: finalStatus,
-        notes: document.getElementById('att-notes').value
+        notes
       };
 
-      DB.push('attendance', record);
-      // حفظ في Firestore (async — لا ننتظر)
-      FDB.add('attendance', record).then(fsId => {
-        // تحديث الـ ID المحلي بـ Firestore ID
-        const arr = DB.get('attendance') || [];
-        const idx = arr.findIndex(r => r.id === record.id);
-        if (idx >= 0) { arr[idx].fsId = fsId; DB.set('attendance', arr); }
-      }).catch(e => console.warn('Firestore attendance save:', e));
-      closeModal('modal-add-attendance');
-      toast('تم تسجيل الحضور بنجاح');
+      const localRecord = DB.push('attendance', record);
 
-      // Add notification if late or absent
+      try {
+        const fsId = await FDB.add(tenantCollection('attendance'), record);
+        const arr = DB.get('attendance') || [];
+        const idx = arr.findIndex(r => r.id === localRecord.id);
+        if (idx >= 0) {
+          arr[idx].fsId = fsId;
+          DB.set('attendance', arr);
+        }
+      } catch (e) {
+        console.warn('Firestore attendance save:', e);
+      }
+
       if (finalStatus === 'متأخر' || finalStatus === 'غائب') {
-        const notifs = DB.get('notifications') || [];
-        notifs.unshift({
+        const notifData = {
           type: finalStatus === 'متأخر' ? 'warning' : 'danger',
           icon: finalStatus === 'متأخر' ? 'fas fa-clock' : 'fas fa-user-xmark',
           title: finalStatus === 'متأخر' ? 'موظف متأخر' : 'موظف غائب',
           text: `${emp.name} — ${finalStatus === 'متأخر' ? 'تأخر عن موعد الدوام' : 'لم يسجل حضوره اليوم'}`,
           time: 'الآن',
-          read: false
-        });
+          read: false,
+          companyId: getCurrentCompanyId()
+        };
+        const notifs = DB.get('notifications') || [];
+        notifs.unshift(notifData);
         DB.set('notifications', notifs);
+        FDB.add(tenantCollection('notifications'), notifData).catch(() => { });
       }
 
+      closeModal('modal-add-attendance');
+      toast('تم حفظ سجل الحضور بنجاح');
       updateBadges();
-      renderPage(document.querySelector('.page.active').id.replace('page-', ''));
-
-      // Reset form
-      ['att-emp', 'att-in', 'att-out', 'att-notes'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
-      document.getElementById('att-status').value = 'حاضر';
+      renderPage(document.querySelector('.page.active')?.id?.replace('page-', '') || 'attendance');
     }
 
     async function saveEmployee() {
@@ -5145,83 +5452,149 @@
       const dept = document.getElementById('emp-dept-sel').value;
       const loginEmail = document.getElementById('emp-login-email').value.trim();
       const loginPass = document.getElementById('emp-login-pass').value.trim();
+      const empRole = document.getElementById('emp-role').value || 'employee';
 
-      if (!name || !job || !dept) { toast('يرجى ملء الحقول المطلوبة', 'warning'); return; }
-      if (!loginEmail || !loginPass) { toast('يرجى إدخال بيانات الدخول للموظف', 'warning'); return; }
-      if (loginPass.length < 6) { toast('كلمة المرور يجب أن تكون 6 أحرف على الأقل', 'warning'); return; }
+      if (!name || !job || !dept) {
+        toast('يرجى ملء الحقول المطلوبة', 'warning');
+        return;
+      }
+
+      if (!loginEmail || !loginPass) {
+        toast('يرجى إدخال بيانات الدخول للموظف', 'warning');
+        return;
+      }
+
+      if (loginPass.length < 6) {
+        toast('كلمة المرور يجب أن تكون 6 أحرف على الأقل', 'warning');
+        return;
+      }
+
+      const companyId = getCurrentCompanyId();
+      const companyName =
+        CURRENT_COMPANY_NAME ||
+        CURRENT_USER_DOC?.companyName ||
+        DB.get('current_user')?.companyName ||
+        DB.get('current_user')?.company ||
+        '';
+
+      if (!companyId) {
+        toast('لا توجد شركة مرتبطة بحساب المدير الحالي', 'danger');
+        return;
+      }
 
       const saveBtn = document.querySelector('#modal-add-employee .btn-primary');
+      const originalHtml = saveBtn.innerHTML;
       saveBtn.disabled = true;
       saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإنشاء...';
 
       try {
-        // 1. إنشاء حساب Firebase Auth للموظف
-        //    نستخدم secondary auth instance حتى لا نفقد جلسة المدير
-        const secondaryApp = firebase.initializeApp(FIREBASE_CONFIG, 'secondary_' + Date.now());
+        const secondaryApp = firebase.initializeApp(
+          FIREBASE_CONFIG,
+          'secondary_' + Date.now()
+        );
         const secondaryAuth = secondaryApp.auth();
 
         let empUid;
+
         try {
           const cred = await secondaryAuth.createUserWithEmailAndPassword(loginEmail, loginPass);
           empUid = cred.user.uid;
-          // تسجيل الخروج فوراً من الـ secondary instance
           await secondaryAuth.signOut();
         } finally {
           await secondaryApp.delete();
         }
 
-        const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316', '#ec4899'];
+        const colors = [
+          '#3b82f6',
+          '#10b981',
+          '#f59e0b',
+          '#ef4444',
+          '#8b5cf6',
+          '#06b6d4',
+          '#f97316',
+          '#ec4899'
+        ];
         const color = colors[Math.floor(Math.random() * colors.length)];
 
         const empData = {
-          name, job, dept,
+          id: empUid,
+          uid: empUid,
+          companyId,
+          companyName,
+          name,
+          job,
+          dept,
           shift: document.getElementById('emp-shift').value,
           leaveBalance: parseInt(document.getElementById('emp-leave-bal').value) || 21,
-          phone: document.getElementById('emp-phone').value,
-          email: document.getElementById('emp-email').value || loginEmail,
+          phone: document.getElementById('emp-phone').value.trim(),
+          email: document.getElementById('emp-email').value.trim() || loginEmail,
           loginEmail,
           hireDate: document.getElementById('emp-hire').value,
           color,
           salary: 0,
           active: true,
-          uid: empUid
+          role: empRole,
+          createdAt: new Date().toISOString()
         };
 
-        // 2. حفظ في Firestore: users/{uid} بدور employee
         await FDB.set('users', empUid, {
-          name, email: loginEmail, role: 'employee', active: true, empId: empUid
+          name,
+          email: loginEmail,
+          role: empRole,
+          active: true,
+          empId: empUid,
+          companyId,
+          companyName
         });
 
-        // 3. حفظ في Firestore: employees/{uid}
-        await FDB.set('employees', empUid, empData);
+        await FDB.set(tenantCollection('employees'), empUid, empData);
 
-        // 4. تحديث localStorage للعرض الفوري
         const localEmps = DB.get('employees') || [];
-        localEmps.push({ id: empUid, ...empData });
+        localEmps.push({ ...empData });
         DB.set('employees', localEmps);
 
         saveBtn.disabled = false;
-        saveBtn.innerHTML = '<i class="fas fa-floppy-disk"></i> إضافة';
+        saveBtn.innerHTML = originalHtml;
+
         closeModal('modal-add-employee');
 
-        // عرض بيانات الدخول للمدير
         showLoginCredentials(name, loginEmail, loginPass);
 
-        renderPage(document.querySelector('.page.active')?.id?.replace('page-', '') || 'employees');
-        ['emp-name', 'emp-job', 'emp-phone', 'emp-email', 'emp-hire', 'emp-login-email', 'emp-login-pass'].forEach(id => {
+        renderPage(
+          document.querySelector('.page.active')?.id?.replace('page-', '') || 'employees'
+        );
+
+        [
+          'emp-name',
+          'emp-job',
+          'emp-phone',
+          'emp-email',
+          'emp-hire',
+          'emp-login-email',
+          'emp-login-pass'
+        ].forEach(id => {
           const el = document.getElementById(id);
           if (el) el.value = '';
         });
 
+        document.getElementById('emp-dept-sel').value = '';
+        document.getElementById('emp-shift').value = 'صباحي';
+        document.getElementById('emp-role').value = 'employee';
+        document.getElementById('emp-leave-bal').value = '21';
+
+        toast('تم إضافة الموظف وربطه بالشركة بنجاح', 'success');
+
       } catch (err) {
         saveBtn.disabled = false;
-        saveBtn.innerHTML = '<i class="fas fa-floppy-disk"></i> إضافة';
+        saveBtn.innerHTML = originalHtml;
+
         const msgs = {
           'auth/email-already-in-use': 'هذا البريد الإلكتروني مستخدم بالفعل',
           'auth/weak-password': 'كلمة المرور ضعيفة جداً',
           'auth/network-request-failed': 'خطأ في الاتصال بالإنترنت'
         };
-        toast(msgs[err.code] || 'خطأ: ' + err.message, 'danger');
+
+        toast(msgs[err.code] || ('خطأ: ' + err.message), 'danger');
       }
     }
 
@@ -5262,49 +5635,107 @@
       overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
     }
 
-    function saveLeave() {
+    async function saveLeave() {
       const empId = document.getElementById('leave-emp').value;
       const from = document.getElementById('leave-from').value;
       const to = document.getElementById('leave-to').value;
       const type = document.getElementById('leave-type').value;
       const status = document.getElementById('leave-status').value;
 
-      if (!empId || !from || !to) { toast('يرجى ملء الحقول المطلوبة', 'warning'); return; }
-      if (new Date(to) < new Date(from)) { toast('تاريخ النهاية يجب أن يكون بعد تاريخ البداية', 'warning'); return; }
+      if (!empId || !from || !to) {
+        toast('يرجى ملء الحقول المطلوبة', 'warning');
+        return;
+      }
+
+      if (new Date(to) < new Date(from)) {
+        toast('تاريخ النهاية يجب أن يكون بعد تاريخ البداية', 'warning');
+        return;
+      }
 
       const employees = DB.get('employees') || [];
       const emp = employees.find(e => e.id === empId);
-      if (!emp) return;
+      if (!emp) {
+        toast('الموظف غير موجود', 'danger');
+        return;
+      }
 
       const days = Math.ceil((new Date(to) - new Date(from)) / 86400000) + 1;
-      const leaveRecord = { empName: emp.name, type, from, to, days, status, reason: document.getElementById('leave-reason').value };
-      DB.push('leaves', leaveRecord);
-      FDB.add('leaves', leaveRecord).catch(e => console.warn('Firestore leave save:', e));
+
+      const leaveRecord = {
+        empId: emp.id,
+        empName: emp.name,
+        dept: emp.dept,
+        companyId: getCurrentCompanyId(),
+        type,
+        from,
+        to,
+        days,
+        status,
+        reason: document.getElementById('leave-reason').value || ''
+      };
+
+      const localLeave = DB.push('leaves', leaveRecord);
+
+      try {
+        const fsId = await FDB.add(tenantCollection('leaves'), leaveRecord);
+        const arr = DB.get('leaves') || [];
+        const idx = arr.findIndex(r => r.id === localLeave.id);
+        if (idx >= 0) {
+          arr[idx].fsId = fsId;
+          DB.set('leaves', arr);
+        }
+      } catch (e) {
+        console.warn('Firestore leave save:', e);
+      }
+
       closeModal('modal-add-leave');
       toast('تم إضافة طلب الإجازة بنجاح');
       updateBadges();
-      renderLeaves(currentLeaveTab);
+      renderLeaves(currentLeaveTab || 'all');
     }
 
-    function saveOvertime() {
+    async function saveOvertime() {
       const empId = document.getElementById('ot-emp').value;
       const date = document.getElementById('ot-date').value;
       const hours = parseFloat(document.getElementById('ot-hours').value);
 
-      if (!empId || !date || !hours || hours <= 0) { toast('يرجى ملء الحقول المطلوبة', 'warning'); return; }
+      if (!empId || !date || !hours || hours <= 0) {
+        toast('يرجى ملء الحقول المطلوبة', 'warning');
+        return;
+      }
 
       const employees = DB.get('employees') || [];
       const emp = employees.find(e => e.id === empId);
-      if (!emp) return;
+      if (!emp) {
+        toast('الموظف غير موجود', 'danger');
+        return;
+      }
 
       const otRecord = {
+        empId: emp.id,
         empName: emp.name,
-        date, hours,
+        dept: emp.dept,
+        companyId: getCurrentCompanyId(),
+        date,
+        hours,
         rate: parseFloat(document.getElementById('ot-rate').value) || 50,
-        reason: document.getElementById('ot-reason').value
+        reason: document.getElementById('ot-reason').value || ''
       };
-      DB.push('overtime', otRecord);
-      FDB.add('overtime', otRecord).catch(e => console.warn('Firestore overtime save:', e));
+
+      const localOt = DB.push('overtime', otRecord);
+
+      try {
+        const fsId = await FDB.add(tenantCollection('overtime'), otRecord);
+        const arr = DB.get('overtime') || [];
+        const idx = arr.findIndex(r => r.id === localOt.id);
+        if (idx >= 0) {
+          arr[idx].fsId = fsId;
+          DB.set('overtime', arr);
+        }
+      } catch (e) {
+        console.warn('Firestore overtime save:', e);
+      }
+
       closeModal('modal-add-overtime');
       toast('تم إضافة الوقت الإضافي بنجاح');
       renderOvertime();
@@ -5328,11 +5759,21 @@
       document.getElementById('att-date').value = todayStr();
     }
 
-    function deleteRecord(key, id) {
+    async function deleteRecord(key, id) {
       if (!confirm('هل تريد حذف هذا السجل؟')) return;
+
+      const arr = DB.get(key) || [];
+      const row = arr.find(x => x.id === id);
       DB.remove(key, id);
-      // حذف من Firestore أيضاً (async)
-      FDB.delete(key, id).catch(e => console.warn('Firestore delete:', e));
+
+      try {
+        // نستخدم fsId إن وُجد، وإلا نجرب id مباشرةً لو يبدو Firestore ID (أطول من 15 حرف)
+        const fireId = row?.fsId || (row?.id && row.id.length > 15 ? row.id : null);
+        if (fireId) await FDB.delete(tenantCollection(key), fireId);
+      } catch (e) {
+        console.warn('Firestore delete:', e);
+      }
+
       toast('تم الحذف', 'danger');
       const activePage = document.querySelector('.page.active')?.id?.replace('page-', '');
       if (activePage) renderPage(activePage);
@@ -5420,9 +5861,19 @@
             return;
           }
           // تخزين محلي للجلسة
-          DB.set('current_user', { name: userDoc.name, email: userDoc.email, role: userDoc.role, uid: cred.user.uid });
+          DB.set('current_user', {
+            name: userDoc.name,
+            email: userDoc.email,
+            role: userDoc.role,
+            uid: cred.user.uid,
+            companyId: userDoc.companyId || null,
+            companyName: userDoc.companyName || userDoc.company || '',
+            company: userDoc.companyName || userDoc.company || ''
+          });
           CURRENT_FB_USER = cred.user;
           CURRENT_USER_DOC = userDoc;
+          CURRENT_COMPANY_ID = userDoc.companyId || null;
+          CURRENT_COMPANY_NAME = userDoc.companyName || userDoc.company || '';
 
           if (userDoc.role === 'employee') {
             enterEmployeePortal(userDoc.name, userDoc.email);
@@ -5444,38 +5895,85 @@
         });
     }
 
-    function doRegister() {
-      // تسجيل مدير جديد — للاستخدام الاستثنائي فقط
+    async function doRegister() {
       const name = document.getElementById('reg-name').value.trim();
+      const company = document.getElementById('reg-company').value.trim();
       const email = document.getElementById('reg-email').value.trim();
       const pass = document.getElementById('reg-pass').value;
       const pass2 = document.getElementById('reg-pass2').value;
 
-      if (!name || !email || !pass) { showAuthAlert('يرجى ملء جميع الحقول'); return; }
+      const btn = document.querySelector('#form-register .auth-btn');
+      const originalHtml = btn ? btn.innerHTML : '';
+
+      if (!name || !company || !email || !pass) { showAuthAlert('يرجى ملء جميع الحقول'); return; }
       if (pass.length < 6) { showAuthAlert('كلمة المرور يجب أن تكون 6 أحرف على الأقل'); return; }
       if (pass !== pass2) { showAuthAlert('كلمة المرور وتأكيدها غير متطابقتين'); return; }
 
-      const btn = document.querySelector('#form-register .auth-btn');
+      if (await isCompanyNameTaken(company)) {
+        showAuthAlert('اسم الشركة مستخدم بالفعل، اختر اسمًا آخر');
+        return;
+      }
+
       if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإنشاء...'; }
 
-      auth.createUserWithEmailAndPassword(email, pass)
-        .then(async cred => {
-          await FDB.set('users', cred.user.uid, { name, email, role: 'admin', active: true });
-          DB.set('current_user', { name, email, role: 'admin', uid: cred.user.uid });
-          CURRENT_FB_USER = cred.user;
-          CURRENT_USER_DOC = { name, email, role: 'admin' };
-          showAuthAlert('تم إنشاء الحساب بنجاح!', 'success');
-          setTimeout(() => enterApp(name, email), 1000);
-        })
-        .catch(err => {
-          const msgs = {
-            'auth/email-already-in-use': 'هذا البريد مسجل بالفعل',
-            'auth/weak-password': 'كلمة المرور ضعيفة جداً',
-            'auth/network-request-failed': 'خطأ في الاتصال'
-          };
-          showAuthAlert(msgs[err.code] || err.message);
-          if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-user-plus"></i> إنشاء الحساب'; }
+      try {
+        // 1. إنشاء حساب Firebase Auth
+        const cred = await auth.createUserWithEmailAndPassword(email, pass);
+        const uid = cred.user.uid;
+
+        // 2. إنشاء شركة في Firestore
+        const companyId = 'cmp_' + uid;
+        const companyPayload = {
+          id: companyId,
+          name: company,
+          normalizedName: normalizeCompanyName(company),
+          slug: companySlugify(company),
+          ownerUid: uid,
+          ownerName: name,
+          ownerEmail: email,
+          active: true,
+          createdAt: new Date().toISOString()
+        };
+        await FDB.set('companies', companyId, companyPayload);
+
+        // 3. إنشاء إعدادات الشركة الافتراضية
+        const defaultSettings = { startTime: '08:00', endTime: '17:00', lateMinutes: 15, workdays: '5' };
+        const defaultDepartments = ['الإدارة', 'تقنية المعلومات', 'المحاسبة', 'المبيعات', 'الموارد البشرية'];
+        await Promise.all([
+          FDB.set('companies/' + companyId + '/settings', 'main', defaultSettings),
+          FDB.set('companies/' + companyId + '/settings', 'departments', { items: defaultDepartments })
+        ]);
+
+        // 4. حفظ المدير في Firestore مع ربطه بالشركة
+        await FDB.set('users', uid, {
+          name, email, role: 'admin', active: true,
+          companyId, companyName: company
         });
+
+        // 5. حفظ محلي
+        CURRENT_FB_USER = cred.user;
+        CURRENT_USER_DOC = { name, email, role: 'admin', companyId, companyName: company };
+        CURRENT_COMPANY_ID = companyId;
+        CURRENT_COMPANY_NAME = company;
+        DB.set('current_user', { name, email, role: 'admin', uid, companyId, companyName: company, company });
+
+        // 5. تفريغ الحقول
+        ['reg-name', 'reg-company', 'reg-email', 'reg-pass', 'reg-pass2'].forEach(id => {
+          const el = document.getElementById(id); if (el) el.value = '';
+        });
+
+        showAuthAlert('تم إنشاء الشركة والحساب بنجاح!', 'success');
+        setTimeout(() => enterApp(name, email), 1000);
+
+      } catch (err) {
+        const msgs = {
+          'auth/email-already-in-use': 'هذا البريد مسجل بالفعل',
+          'auth/weak-password': 'كلمة المرور ضعيفة جداً',
+          'auth/network-request-failed': 'خطأ في الاتصال بالإنترنت'
+        };
+        showAuthAlert(msgs[err.code] || ('خطأ: ' + err.message));
+        if (btn) { btn.disabled = false; btn.innerHTML = originalHtml; }
+      }
     }
 
 
@@ -5498,10 +5996,12 @@
       // تحديث بيانات المستخدم في الـ topbar
       document.getElementById('topbar-username').textContent = name;
       document.getElementById('topbar-avatar').textContent = (name || 'م')[0];
+      applyRolePermissions();
 
       // تحميل البيانات من Firestore ثم عرض الداشبورد
       try {
         await loadAllData();
+        await loadCompanyProfileFromFirestore();
       } catch (e) {
         console.warn('Data load error (using cached):', e);
       }
@@ -5523,7 +6023,10 @@
       DB.set('current_user', null);
       CURRENT_FB_USER = null;
       CURRENT_USER_DOC = null;
+      CURRENT_COMPANY_ID = null;
+      CURRENT_COMPANY_NAME = null;
 
+      document.getElementById('employee-portal').classList.remove('show');
       document.getElementById('sidebar').classList.add('sidebar-hidden');
       document.getElementById('main-wrapper').classList.add('main-hidden');
       document.body.classList.remove('app-visible');
@@ -5538,7 +6041,11 @@
     }
 
     function checkAuth() {
-      // Firebase onAuthStateChanged يتعامل مع الـ session تلقائياً
+      if (!FIREBASE_ENABLED) {
+        DB.set('current_user', null);
+        return;
+      }
+
       auth.onAuthStateChanged(async (fbUser) => {
         if (fbUser) {
           try {
@@ -5546,22 +6053,28 @@
             if (userDoc) {
               CURRENT_FB_USER = fbUser;
               CURRENT_USER_DOC = userDoc;
-              DB.set('current_user', { name: userDoc.name, email: userDoc.email, role: userDoc.role, uid: fbUser.uid });
-
+              CURRENT_COMPANY_ID = userDoc.companyId || null;
+              CURRENT_COMPANY_NAME = userDoc.companyName || userDoc.company || '';
+              DB.set('current_user', {
+                name: userDoc.name, email: userDoc.email, role: userDoc.role,
+                uid: fbUser.uid, companyId: CURRENT_COMPANY_ID, companyName: CURRENT_COMPANY_NAME,
+                company: CURRENT_COMPANY_NAME
+              });
               if (userDoc.role === 'employee') {
                 enterEmployeePortal(userDoc.name, userDoc.email, true);
               } else {
                 enterApp(userDoc.name, userDoc.email, true);
               }
             } else {
-              // المستخدم موجود في Auth لكن مش في Firestore
               auth.signOut();
+              DB.set('current_user', null);
             }
           } catch (e) {
             console.error('checkAuth error:', e);
-            // في حالة خطأ الشبكة، نحاول الـ localStorage
             const cached = DB.get('current_user');
             if (cached && cached.name) {
+              CURRENT_COMPANY_ID = cached.companyId || null;
+              CURRENT_COMPANY_NAME = cached.companyName || cached.company || '';
               if (cached.role === 'employee') {
                 enterEmployeePortal(cached.name, cached.email, true);
               } else {
@@ -5570,7 +6083,6 @@
             }
           }
         } else {
-          // لا يوجد مستخدم مسجل دخول
           DB.set('current_user', null);
         }
       });
@@ -5585,9 +6097,10 @@
 
     function testFirebaseConnection() {
       if (FIREBASE_ENABLED) {
-        toast(`Firebase متصل بالمشروع: ${FIREBASE_CONFIG.projectId}`, 'success');
+        toast('Firebase مُعدَّل في الكود — جاري اختبار الاتصال...', 'info');
+        // ضع هنا منطق اختبار الاتصال الفعلي مع Firebase SDK
       } else {
-        toast('Firebase غير متاح حالياً — تحقق من اتصال الإنترنت أو تحميل مكتبات Firebase', 'warning');
+        toast('Firebase غير مُعدَّل — النظام يعمل بـ localStorage', 'warning');
       }
     }
 
@@ -5831,8 +6344,8 @@
       empClockInterval = setInterval(updateEmpClock, 1000);
       updateEmpClock();
 
-      // تحميل بيانات الموظف
-      loadEmployeePortalData(name);
+      // تحميل بيانات الموظف من Firestore أولاً
+      loadAllData().then(() => loadEmployeePortalData(name)).catch(() => loadEmployeePortalData(name));
 
       if (!silent) {
         // animation entrance
@@ -5985,9 +6498,10 @@
     `).join('');
     }
 
-    function empCheckIn() {
+    async function empCheckIn() {
       const user = DB.get('current_user');
       if (!user) return;
+
       const today = todayStr();
       const att = DB.get('attendance') || [];
       const existing = att.find(a => a.empName === user.name && a.date === today);
@@ -6001,17 +6515,20 @@
       const settings = DB.get('settings') || {};
       const startTime = settings.startTime || '08:00';
       const lateMin = parseInt(settings.lateMinutes) || 15;
+
       const [sh, sm] = startTime.split(':').map(Number);
       const [nh, nm] = now.split(':').map(Number);
       const diff = (nh * 60 + nm) - (sh * 60 + sm);
       const status = diff > lateMin ? 'متأخر' : 'حاضر';
 
       const employees = DB.get('employees') || [];
-      const emp = employees.find(e => e.name === user.name);
+      const emp = employees.find(e => e.name === user.name || e.id === user.empId || e.uid === user.uid);
 
       const rec = {
+        empId: emp?.id || user.empId || user.uid || '',
         empName: user.name,
         dept: emp ? emp.dept : '—',
+        companyId: getCurrentCompanyId(),
         date: today,
         checkIn: now,
         checkOut: '',
@@ -6020,35 +6537,53 @@
       };
 
       const savedRec = DB.push('attendance', rec);
-      // حفظ في Firestore
-      FDB.add('attendance', rec).then(fsId => {
+
+      try {
+        const fsId = await FDB.add(tenantCollection('attendance'), rec);
         const arr = DB.get('attendance') || [];
         const idx = arr.findIndex(r => r.id === savedRec.id);
-        if (idx >= 0) { arr[idx].fsId = fsId; DB.set('attendance', arr); }
-      }).catch(e => console.warn('Firestore attendance (emp):', e));
+        if (idx >= 0) {
+          arr[idx].fsId = fsId;
+          DB.set('attendance', arr);
+        }
+      } catch (e) {
+        console.warn('Firestore attendance (emp):', e);
+      }
 
-      showEmpToast(status === 'متأخر' ? `تم تسجيل الحضور ✓ — متأخر ${diff} دقيقة` : 'تم تسجيل الحضور بنجاح ✓', status === 'متأخر' ? 'warning' : 'success');
-
-      // إشعار للمدير في Firestore
       const notifData = {
         type: status === 'متأخر' ? 'warning' : 'success',
         icon: 'fas fa-sign-in-alt',
         title: status === 'متأخر' ? 'موظف متأخر' : 'تسجيل حضور',
         text: `${user.name} سجّل حضوره الساعة ${now}${status === 'متأخر' ? ' (متأخر)' : ''}`,
         time: 'الآن',
-        read: false
+        read: false,
+        companyId: getCurrentCompanyId()
       };
+
       const notifs = DB.get('notifications') || [];
       notifs.unshift(notifData);
       DB.set('notifications', notifs);
-      FDB.add('notifications', notifData).catch(e => console.warn('Firestore notif:', e));
+
+      try {
+        await FDB.add(tenantCollection('notifications'), notifData);
+      } catch (e) {
+        console.warn('Firestore notif:', e);
+      }
+
+      showEmpToast(
+        status === 'متأخر'
+          ? `تم تسجيل الحضور ✓ — متأخر ${diff} دقيقة`
+          : 'تم تسجيل الحضور بنجاح ✓',
+        status === 'متأخر' ? 'warning' : 'success'
+      );
 
       loadEmployeePortalData(user.name);
     }
 
-    function empCheckOut() {
+    async function empCheckOut() {
       const user = DB.get('current_user');
       if (!user) return;
+
       const today = todayStr();
       const att = DB.get('attendance') || [];
       const existing = att.find(a => a.empName === user.name && a.date === today);
@@ -6057,74 +6592,84 @@
         showEmpToast('يجب تسجيل الحضور أولاً', 'warning');
         return;
       }
+
       if (existing.checkOut) {
-        showEmpToast('سجّلت انصرافك بالفعل الساعة ' + existing.checkOut, 'warning');
+        showEmpToast('تم تسجيل الانصراف بالفعل الساعة ' + existing.checkOut, 'warning');
         return;
       }
 
       const now = new Date().toTimeString().slice(0, 5);
+
       DB.update('attendance', existing.id, { checkOut: now });
-      // تحديث في Firestore إذا كان هناك fsId
-      if (existing.fsId) {
-        FDB.update('attendance', existing.fsId, { checkOut: now }).catch(e => console.warn('Firestore checkout:', e));
+
+      try {
+        const fireId = existing.fsId || (existing.id && existing.id.length > 15 ? existing.id : null);
+        if (fireId) {
+          await FDB.update(tenantCollection('attendance'), fireId, { checkOut: now });
+        }
+      } catch (e) {
+        console.warn('Firestore checkout update:', e);
       }
-      showEmpToast('تم تسجيل الانصراف بنجاح ✓ — ' + now, 'success');
-      loadEmployeePortalData(user.name);
-    }
 
-    function empRequestLeave() {
-      const user = DB.get('current_user');
-      if (!user) return;
-      const type = document.getElementById('emp-leave-type').value;
-      const from = document.getElementById('emp-leave-from').value;
-      const to = document.getElementById('emp-leave-to').value;
-      const reason = document.getElementById('emp-leave-reason').value.trim();
-
-      if (!from || !to) { showEmpToast('اختر تاريخ البداية والنهاية', 'warning'); return; }
-      if (new Date(to) < new Date(from)) { showEmpToast('تاريخ النهاية يجب أن يكون بعد البداية', 'warning'); return; }
-
-      const days = Math.ceil((new Date(to) - new Date(from)) / 86400000) + 1;
-      const empLeaveRecord = {
-        empName: user.name,
-        type, from, to, days,
-        reason: reason || type,
-        status: 'قيد المراجعة'
-      };
-      DB.push('leaves', empLeaveRecord);
-      FDB.add('leaves', empLeaveRecord).catch(e => console.warn('Firestore emp leave:', e));
-
-      // إشعار للمدير
-      const leaveNotif = {
+      const notifData = {
         type: 'info',
-        icon: 'fas fa-calendar',
-        title: 'طلب إجازة جديد',
-        text: `${user.name} طلب إجازة ${type} من ${from} إلى ${to}`,
+        icon: 'fas fa-sign-out-alt',
+        title: 'تسجيل انصراف',
+        text: `${user.name} سجّل انصرافه الساعة ${now}`,
         time: 'الآن',
-        read: false
+        read: false,
+        companyId: getCurrentCompanyId()
       };
-      const notifs2 = DB.get('notifications') || [];
-      notifs2.unshift(leaveNotif);
-      DB.set('notifications', notifs2);
-      FDB.add('notifications', leaveNotif).catch(e => console.warn('Firestore leave notif:', e));
 
-      showEmpToast('تم إرسال طلب الإجازة للمدير ✓', 'success');
-      document.getElementById('emp-leave-reason').value = '';
-      renderMyLeaves(user.name);
+      const notifs = DB.get('notifications') || [];
+      notifs.unshift(notifData);
+      DB.set('notifications', notifs);
+
+      try {
+        await FDB.add(tenantCollection('notifications'), notifData);
+      } catch (e) {
+        console.warn('Firestore notif:', e);
+      }
+
+      showEmpToast('تم تسجيل الانصراف بنجاح ✓', 'success');
+      loadEmployeePortalData(user.name);
     }
 
     function empLogout() {
       if (!confirm('هل تريد تسجيل الخروج؟')) return;
-      if (empClockInterval) clearInterval(empClockInterval);
-      auth.signOut().then(() => {
-        DB.set('current_user', null);
-        CURRENT_FB_USER = null;
-        CURRENT_USER_DOC = null;
-        document.getElementById('employee-portal').classList.remove('show');
-        const authEl = document.getElementById('auth-wrapper');
-        authEl.classList.add('show');
-        authEl.style.display = '';
-        hideAuthAlert();
+
+      // مسح المستخدم من الذاكرة
+      DB.set('current_user', null);
+      CURRENT_FB_USER = null;
+      CURRENT_USER_DOC = null;
+      CURRENT_COMPANY_ID = null;
+      CURRENT_COMPANY_NAME = null;
+
+      // تسجيل خروج من Firebase
+      auth.signOut().catch(err => {
+        console.warn('logout error:', err);
       });
+
+      // إخفاء لوحة الموظف
+      const empPortal = document.getElementById('employee-portal');
+      if (empPortal) {
+        empPortal.style.display = 'none';
+      }
+
+      // إظهار شاشة تسجيل الدخول
+      const authEl = document.getElementById('auth-wrapper');
+      if (authEl) {
+        authEl.style.display = 'block';
+      }
+
+      // إخفاء باقي الواجهة
+      const sidebar = document.getElementById('sidebar');
+      const main = document.getElementById('main-wrapper');
+
+      if (sidebar) sidebar.style.display = 'none';
+      if (main) main.style.display = 'none';
+
+      document.body.classList.remove('app-visible');
     }
 
     function showEmpToast(msg, type = 'success') {
@@ -6148,10 +6693,12 @@
     //  FIRESTORE DATA LOADERS — تحل محل localStorage للبيانات الرئيسية
     // ============================================================
 
-    // تحميل الموظفين من Firestore وتخزينهم محلياً للعرض السريع
+    // =============================================
+    //  FIRESTORE DATA LOADERS
+    // =============================================
     async function loadEmployeesFromFirestore() {
       try {
-        const emps = await FDB.getAll('employees');
+        const emps = await FDB.getAll(tenantCollection('employees'));
         DB.set('employees', emps);
         return emps;
       } catch (e) {
@@ -6160,86 +6707,101 @@
       }
     }
 
-    // تحميل سجلات الحضور من Firestore
-    async function loadAttendanceFromFirestore(dateFilter) {
+    async function loadAttendanceFromFirestore(dateFilter = null) {
       try {
-        let emps = await FDB.getAll('attendance', ...(dateFilter ? [['date', '>=', dateFilter]] : []));
-        DB.set('attendance', emps);
-        return emps;
+        let rows;
+        if (dateFilter) {
+          rows = await FDB.getAll(tenantCollection('attendance'), ['date', '>=', dateFilter]);
+        } else {
+          rows = await FDB.getAll(tenantCollection('attendance'));
+        }
+        DB.set('attendance', rows);
+        return rows;
       } catch (e) {
         console.warn('loadAttendance error:', e);
         return DB.get('attendance') || [];
       }
     }
 
-    // تحميل الإجازات
     async function loadLeavesFromFirestore() {
       try {
-        const leaves = await FDB.getAll('leaves');
+        const leaves = await FDB.getAll(tenantCollection('leaves'));
         DB.set('leaves', leaves);
         return leaves;
       } catch (e) {
+        console.warn('loadLeaves error:', e);
         return DB.get('leaves') || [];
       }
     }
 
-    // تحميل الوقت الإضافي
     async function loadOvertimeFromFirestore() {
       try {
-        const ot = await FDB.getAll('overtime');
+        const ot = await FDB.getAll(tenantCollection('overtime'));
         DB.set('overtime', ot);
         return ot;
       } catch (e) {
+        console.warn('loadOvertime error:', e);
         return DB.get('overtime') || [];
       }
     }
 
-    // تحميل الإشعارات
     async function loadNotificationsFromFirestore() {
       try {
-        const notifs = await FDB.getAll('notifications');
-        // ترتيب من الأحدث للأقدم
+        const notifs = await FDB.getAll(tenantCollection('notifications'));
         notifs.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
         DB.set('notifications', notifs);
         return notifs;
       } catch (e) {
+        console.warn('loadNotifications error:', e);
         return DB.get('notifications') || [];
       }
     }
 
-    // تهيئة الإعدادات من Firestore
     async function loadSettingsFromFirestore() {
       try {
-        const s = await FDB.get('settings', 'main');
-        if (s) DB.set('settings', s);
-        else {
-          // أول مرة — حفظ الإعدادات الافتراضية
-          const defaultSettings = { startTime: '08:00', endTime: '17:00', lateMinutes: 15, workdays: '5' };
-          await FDB.set('settings', 'main', defaultSettings);
-          DB.set('settings', defaultSettings);
+        const s = await FDB.get(tenantCollection('settings'), 'main');
+        if (s) {
+          DB.set('settings', s);
+          return s;
         }
+        const defaultSettings = { startTime: '08:00', endTime: '17:00', lateMinutes: 15, workdays: '5' };
+        await FDB.set(tenantCollection('settings'), 'main', defaultSettings);
+        DB.set('settings', defaultSettings);
+        return defaultSettings;
       } catch (e) {
-        if (!DB.get('settings')) DB.set('settings', { startTime: '08:00', endTime: '17:00', lateMinutes: 15, workdays: '5' });
+        console.warn('loadSettings error:', e);
+        const local = DB.get('settings') || { startTime: '08:00', endTime: '17:00', lateMinutes: 15, workdays: '5' };
+        DB.set('settings', local);
+        return local;
       }
     }
 
-    // تحميل الأقسام من Firestore
     async function loadDepartmentsFromFirestore() {
       try {
-        const doc = await FDB.get('settings', 'departments');
-        if (doc && doc.list) DB.set('departments', doc.list);
-        else {
-          const def = ['الإدارة', 'تقنية المعلومات', 'المحاسبة', 'المبيعات', 'الموارد البشرية'];
-          await FDB.set('settings', 'departments', { list: def });
-          DB.set('departments', def);
+        const doc = await FDB.get(tenantCollection('settings'), 'departments');
+        if (doc && Array.isArray(doc.items || doc.list)) {
+          const items = doc.items || doc.list;
+          DB.set('departments', items);
+          return items;
         }
+        const def = ['الإدارة', 'تقنية المعلومات', 'المحاسبة', 'المبيعات', 'الموارد البشرية'];
+        await FDB.set(tenantCollection('settings'), 'departments', { items: def });
+        DB.set('departments', def);
+        return def;
       } catch (e) {
-        if (!DB.get('departments')) DB.set('departments', ['الإدارة', 'تقنية المعلومات', 'المحاسبة', 'المبيعات', 'الموارد البشرية']);
+        console.warn('loadDepartments error:', e);
+        return DB.get('departments') || [];
       }
     }
 
-    // تحميل كل البيانات دفعة واحدة
     async function loadAllData() {
+      const companyId = getCurrentCompanyId();
+
+      if (!companyId) {
+        console.warn('loadAllData: no companyId found');
+        return;
+      }
+
       await Promise.all([
         loadEmployeesFromFirestore(),
         loadAttendanceFromFirestore(),
@@ -6247,9 +6809,12 @@
         loadOvertimeFromFirestore(),
         loadSettingsFromFirestore(),
         loadDepartmentsFromFirestore(),
-        loadNotificationsFromFirestore()
+        loadNotificationsFromFirestore(),
+        loadCompanyProfileFromFirestore()
       ]);
     }
+
+
   </script>
 </body>
 
