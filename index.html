@@ -487,31 +487,6 @@
       border-color: rgba(255, 255, 255, 0.15);
     }
 
-    .demo-btn {
-      width: 100%;
-      padding: 11px;
-      margin-top: 10px;
-      background: transparent;
-      border: 1px dashed rgba(79, 140, 255, 0.35);
-      color: var(--accent);
-      border-radius: var(--r-sm);
-      font-family: 'IBM Plex Sans Arabic', sans-serif;
-      font-size: 13px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-
-    .demo-btn:hover {
-      background: var(--accent-glow);
-      border-color: var(--accent);
-      transform: translateY(-1px);
-    }
-
     .auth-alert {
       padding: 10px 14px;
       border-radius: var(--r-sm);
@@ -3267,8 +3242,6 @@
             </label>
 
             <button type="submit" class="auth-btn"><i class="fas fa-sign-in-alt"></i>دخول</button>
-            <button type="button" class="demo-btn" onclick="enterDemoMode()"><i class="fas fa-flask"></i>تجربة النسخة
-              التجريبية</button>
           </form>
         </div>
 
@@ -4418,148 +4391,6 @@
       else DB.remove('remember_login');
     }
 
-
-    // ── DEMO MODE ──
-    const DEMO_KEY = 'att_demo_meta';
-
-    function initDemoMode() {
-      const meta = JSON.parse(localStorage.getItem(DEMO_KEY) || 'null');
-      if (!meta) {
-        const now = Date.now();
-        localStorage.setItem(DEMO_KEY, JSON.stringify({
-          startedAt: now,
-          expiresAt: now + (14 * 24 * 60 * 60 * 1000),
-          migrated: false
-        }));
-      }
-    }
-
-    function getDemoMeta() {
-      return JSON.parse(localStorage.getItem(DEMO_KEY) || 'null');
-    }
-
-    function isDemoExpired() {
-      const meta = getDemoMeta();
-      return !!(meta && Date.now() > meta.expiresAt);
-    }
-
-    function hasPendingDemoMigration() {
-      const meta = getDemoMeta();
-      return !!(meta && meta.migrated === false);
-    }
-
-    function showDemoExpiredScreen() {
-      hideLoading();
-      const authWrap = el('auth-wrap');
-      const app = el('app');
-      const empPortal = el('emp-portal');
-      if (authWrap) authWrap.classList.remove('show');
-      if (app) app.classList.remove('show');
-      if (empPortal) empPortal.classList.remove('show');
-
-      let overlay = document.getElementById('demo-expired-overlay');
-      if (!overlay) {
-        overlay = document.createElement('div');
-        overlay.id = 'demo-expired-overlay';
-        overlay.style.cssText = 'position:fixed;inset:0;background:#0a0f1e;display:flex;align-items:center;justify-content:center;padding:24px;z-index:10000;';
-        overlay.innerHTML = `
-          <div style="max-width:520px;width:100%;background:#141929;border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:28px;text-align:center;color:#fff;">
-            <div style="width:60px;height:60px;border-radius:50%;background:rgba(240,84,90,.12);border:1px solid rgba(240,84,90,.22);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:22px;color:#f0545a;">
-              <i class="fas fa-clock"></i>
-            </div>
-            <h1 style="margin-bottom:12px;font-size:24px;">انتهت النسخة التجريبية</h1>
-            <p style="color:#8b91a8;line-height:1.9;margin-bottom:18px;">
-              انتهت مدة التجربة المجانية. جميع بياناتك محفوظة. برجاء التواصل مع الدعم الفني لتفعيل النسخة المدفوعة، وبعد تسجيل الدخول سيتم الاستمرار بنفس البيانات التي أدخلتها أثناء التجربة.
-            </p>
-            <button onclick="location.reload()" style="padding:12px 18px;border:none;border-radius:12px;background:#4f8cff;color:#fff;font-weight:700;cursor:pointer;">
-              لدي بيانات دخول
-            </button>
-          </div>
-        `;
-        document.body.appendChild(overlay);
-      } else {
-        overlay.style.display = 'flex';
-      }
-    }
-
-    function enterDemoMode() {
-      initDemoMode();
-      if (isDemoExpired()) {
-        showDemoExpiredScreen();
-        return;
-      }
-
-      const demoCompanyId = 'demo-local';
-      const demoCompanyName = 'نسخة تجريبية';
-
-      DB.set('current_user', {
-        name: 'نسخة تجريبية',
-        email: 'demo@local',
-        role: 'admin',
-        demo: true,
-        companyId: demoCompanyId,
-        companyName: demoCompanyName
-      });
-
-      if (!DB.get('company_profile')) {
-        DB.set('company_profile', {
-          id: demoCompanyId,
-          name: demoCompanyName,
-          phone: '',
-          address: '',
-          slug: 'demo-local'
-        });
-      }
-
-      CUR_USER = null;
-      CUR_DOC = { name: 'نسخة تجريبية', email: 'demo@local', role: 'admin', companyId: demoCompanyId, companyName: demoCompanyName, demo: true };
-      CUR_CID = demoCompanyId;
-      CUR_CNAME = demoCompanyName;
-      enterApp('نسخة تجريبية', 'demo@local', true);
-    }
-
-    async function migrateDemoDataToAccount() {
-      const meta = getDemoMeta();
-      if (!FB_OK || !getCID() || !meta || meta.migrated !== false) return false;
-
-      const targetCompanyId = getCID();
-      const keys = ['employees', 'attendance', 'leaves', 'overtime', 'notifications'];
-
-      for (const key of keys) {
-        const items = DB.get(key) || [];
-        for (const item of items) {
-          const id = item?.id || (Date.now() + Math.random().toString(36).slice(2));
-          const payload = { ...item, id, migratedFromDemo: true };
-          if ('companyId' in payload) payload.companyId = targetCompanyId;
-          await FDB.set(tcol(key), id, payload);
-        }
-      }
-
-      const settings = DB.get('settings');
-      if (settings) await FDB.set(tcol('settings'), 'main', { ...settings, migratedFromDemo: true });
-
-      const departments = DB.get('departments') || [];
-      if (departments.length) await FDB.set(tcol('settings'), 'departments', { items: departments, migratedFromDemo: true });
-
-      const company = DB.get('company_profile') || DB.get('company');
-      if (company) {
-        const companyData = { ...company };
-        delete companyData.id;
-        await FDB.set('companies', targetCompanyId, { ...companyData, migratedFromDemo: true });
-      }
-
-      localStorage.setItem(DEMO_KEY, JSON.stringify({
-        ...meta,
-        migrated: true,
-        migratedAt: Date.now(),
-        migratedCompanyId: targetCompanyId
-      }));
-
-      const current = DB.get('current_user') || {};
-      if (current.demo) DB.set('current_user', { ...current, demo: false, companyId: targetCompanyId });
-      return true;
-    }
-
     // ── INIT ──
     function initData() {
       if (!DB.get('init')) {
@@ -4694,12 +4525,6 @@
       if (df[id] && el(df[id])) el(df[id]).value = td;
       if (id === 'modal-leave' && el('lv-to') && !el('lv-to').value) el('lv-to').value = td;
       el(id).classList.add('open');
-
-      if (id === 'modal-emp') {
-        const isDemo = !!(DB.get('current_user') || {}).demo;
-        const loginWrap = el('e-login-email')?.closest('div[style*="background:var(--accent-glow)"]');
-        if (loginWrap) loginWrap.style.opacity = isDemo ? '0.72' : '1';
-      }
     }
     function closeModal(id) { el(id).classList.remove('open'); }
 
@@ -4767,29 +4592,15 @@
       auth.signInWithEmailAndPassword(email, pass).then(async c => {
         const doc = await FDB.get('users', c.user.uid);
         if (!doc) { showAlert('الحساب غير موجود في النظام'); auth.signOut(); resetLoginButton(); return; }
-
-        const demoMigrationPending = hasPendingDemoMigration();
-
         persistRememberedLogin(email, remember);
         DB.set('current_user', { name: doc.name, email: doc.email, role: doc.role, uid: c.user.uid, companyId: doc.companyId || null, companyName: doc.companyName || '' });
         CUR_USER = c.user; CUR_DOC = doc; CUR_CID = doc.companyId || null; CUR_CNAME = doc.companyName || '';
-
-        if (demoMigrationPending && doc.role !== 'employee') {
-          try {
-            const migrated = await migrateDemoDataToAccount();
-            if (migrated) toast('تم ترحيل بيانات النسخة التجريبية إلى حسابك');
-          } catch (migErr) {
-            console.error('Demo migration failed:', migErr);
-            toast('تم تسجيل الدخول، لكن تعذر ترحيل بعض بيانات النسخة التجريبية', 'warn');
-          }
-        }
-
         if (doc.role === 'employee') enterEmpPortal(doc.name, doc.email);
         else enterApp(doc.name, doc.email);
       }).catch(err => {
         const msgs = { 'auth/user-not-found': 'البريد غير مسجل', 'auth/wrong-password': 'كلمة المرور خاطئة', 'auth/invalid-credential': 'بيانات الدخول غير صحيحة', 'auth/too-many-requests': 'تجاوزت عدد المحاولات', 'no-firebase': 'Firebase غير متاح' };
         showAlert(msgs[err.code] || 'خطأ: ' + err.message);
-        resetLoginButton();
+        btn.disabled = false; btn.innerHTML = '<i class="fas fa-sign-in-alt"></i>دخول';
       });
     }
 
@@ -4886,29 +4697,12 @@
     }
 
     function checkAuth() {
-      const cached = DB.get('current_user');
-
-      if (cached?.demo) {
-        initDemoMode();
-        if (isDemoExpired()) {
-          showDemoExpiredScreen();
-          return;
-        }
-        CUR_USER = null;
-        CUR_DOC = cached;
-        CUR_CID = cached.companyId || 'demo-local';
-        CUR_CNAME = cached.companyName || 'نسخة تجريبية';
-        enterApp(cached.name || 'نسخة تجريبية', cached.email || 'demo@local', true);
-        return;
-      }
-
       // لو Firebase مش متاح — اظهر login مباشرة
       if (!FB_OK) {
         hideLoading();
         el('auth-wrap').classList.add('show');
         return;
       }
-
       auth.onAuthStateChanged(async fb => {
         if (fb) {
           try {
@@ -4924,6 +4718,7 @@
               el('auth-wrap').classList.add('show');
             }
           } catch (e) {
+            // لو فشل الاتصال — جرب من cache
             const c = DB.get('current_user');
             if (c?.name) {
               CUR_CID = c.companyId || null; CUR_CNAME = c.companyName || '';
@@ -4935,6 +4730,7 @@
             }
           }
         } else {
+          // مفيش user مسجل
           hideLoading();
           el('auth-wrap').classList.add('show');
         }
@@ -5502,32 +5298,9 @@
       const name = el('e-name').value.trim(), job = el('e-job').value.trim(), dept = el('e-dept').value;
       const le = el('e-login-email').value.trim(), lp = el('e-login-pass').value.trim();
       if (!name || !job || !dept) { toast('يرجى ملء الحقول المطلوبة', 'warn'); return; }
-
-      const currentUser = DB.get('current_user') || {};
-      const isDemo = !!currentUser.demo;
-      const cid = getCID();
-      if (!cid) { toast('لا توجد شركة مرتبطة', 'err'); return; }
-
-      if (isDemo) {
-        const colors = ['#4f8cff', '#22c98a', '#f5b942', '#f0545a', '#a78bfa', '#06b6d4', '#f97316', '#ec4899'];
-        const color = colors[Math.floor(Math.random() * colors.length)];
-        const id = 'demo_emp_' + Date.now() + Math.random().toString(36).slice(2, 7);
-        const empData = {
-          id, uid: '', companyId: cid, companyName: CUR_CNAME || 'نسخة تجريبية',
-          name, job, dept, shift: el('e-shift').value, leaveBalance: parseInt(el('e-lbal').value) || 21,
-          phone: el('e-phone').value.trim(), email: el('e-email').value.trim() || le, loginEmail: le,
-          hireDate: el('e-hire').value, color, salary: 0, active: true, role: el('e-role').value || 'employee',
-          createdAt: new Date().toISOString(), demoOnly: true
-        };
-        DB.push('employees', empData);
-        closeModal('modal-emp');
-        toast('تم إنشاء الموظف داخل النسخة التجريبية');
-        renderPage(document.querySelector('.page.active')?.id?.replace('page-', ''));
-        return;
-      }
-
       if (!le || !lp) { toast('يرجى إدخال بيانات الدخول', 'warn'); return; }
       if (lp.length < 6) { toast('كلمة المرور 6 أحرف على الأقل', 'warn'); return; }
+      const cid = getCID(); if (!cid) { toast('لا توجد شركة مرتبطة', 'err'); return; }
       const btn = el('emp-save-btn'); btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>جاري الإنشاء...';
       try {
         const sec = firebase.initializeApp(FB_CFG, 'sec_' + Date.now());
@@ -5538,21 +5311,20 @@
         const empData = { id: uid, uid, companyId: cid, companyName: CUR_CNAME || DB.get('current_user')?.companyName || '', name, job, dept, shift: el('e-shift').value, leaveBalance: parseInt(el('e-lbal').value) || 21, phone: el('e-phone').value.trim(), email: el('e-email').value.trim() || le, loginEmail: le, hireDate: el('e-hire').value, color, salary: 0, active: true, role: el('e-role').value || 'employee', createdAt: new Date().toISOString() };
         await FDB.set('users', uid, { name, email: le, role: el('e-role').value || 'employee', active: true, empId: uid, companyId: cid, companyName: CUR_CNAME || '' });
         await FDB.set(tcol('employees'), uid, empData);
-        DB.push('employees', empData);
+        const le_ = DB.get('employees') || []; le_.push({ ...empData }); DB.set('employees', le_);
+        btn.disabled = false; btn.innerHTML = '<i class="fas fa-floppy-disk"></i>إضافة';
         closeModal('modal-emp');
-        toast('تم إنشاء الموظف بنجاح');
+        showCredModal(name, le, lp);
         renderPage(document.querySelector('.page.active')?.id?.replace('page-', ''));
-      } catch (e) {
-        const msgs = { 'auth/email-already-in-use': 'البريد مستخدم بالفعل', 'auth/invalid-email': 'البريد غير صالح', 'auth/weak-password': 'كلمة المرور ضعيفة' };
-        toast(msgs[e.code] || ('تعذر إنشاء الموظف: ' + (e.message || 'خطأ غير معروف')), 'err');
-      } finally {
-        const btn2 = el('emp-save-btn');
-        if (btn2) {
-          btn2.disabled = false;
-          btn2.innerHTML = '<i class="fas fa-floppy-disk"></i>إضافة';
-        }
+        ['e-name', 'e-job', 'e-phone', 'e-email', 'e-hire', 'e-login-email', 'e-login-pass'].forEach(id => { const e = el(id); if (e) e.value = ''; });
+        toast('تم إضافة الموظف بنجاح');
+      } catch (err) {
+        btn.disabled = false; btn.innerHTML = '<i class="fas fa-floppy-disk"></i>إضافة';
+        const ms = { 'auth/email-already-in-use': 'البريد مستخدم بالفعل', 'auth/weak-password': 'كلمة المرور ضعيفة' };
+        toast(ms[err.code] || 'خطأ: ' + err.message, 'err');
       }
     }
+
     function showCredModal(name, email, pass) {
       const ov = document.createElement('div');
       ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:2000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);padding:20px;';
