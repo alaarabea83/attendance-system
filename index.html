@@ -487,6 +487,31 @@
       border-color: rgba(255, 255, 255, 0.15);
     }
 
+    .demo-btn {
+      width: 100%;
+      padding: 11px;
+      margin-top: 10px;
+      background: transparent;
+      border: 1px dashed rgba(79, 140, 255, 0.35);
+      color: var(--accent);
+      border-radius: var(--r-sm);
+      font-family: 'IBM Plex Sans Arabic', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .demo-btn:hover {
+      background: var(--accent-glow);
+      border-color: var(--accent);
+      transform: translateY(-1px);
+    }
+
     .auth-alert {
       padding: 10px 14px;
       border-radius: var(--r-sm);
@@ -3242,6 +3267,8 @@
             </label>
 
             <button type="submit" class="auth-btn"><i class="fas fa-sign-in-alt"></i>دخول</button>
+            <button type="button" class="demo-btn" onclick="enterDemoMode()"><i class="fas fa-flask"></i>تجربة النسخة
+              التجريبية</button>
           </form>
         </div>
 
@@ -4391,6 +4418,127 @@
       else DB.remove('remember_login');
     }
 
+
+    // ── DEMO MODE ──
+    const DEMO_KEY = 'att_demo_meta';
+
+    function initDemoMode() {
+      const meta = JSON.parse(localStorage.getItem(DEMO_KEY) || 'null');
+      if (!meta) {
+        const now = Date.now();
+        localStorage.setItem(DEMO_KEY, JSON.stringify({
+          startedAt: now,
+          expiresAt: now + (14 * 24 * 60 * 60 * 1000),
+          migrated: false
+        }));
+      }
+    }
+
+    function getDemoMeta() {
+      return JSON.parse(localStorage.getItem(DEMO_KEY) || 'null');
+    }
+
+    function isDemoExpired() {
+      const meta = getDemoMeta();
+      return !!(meta && Date.now() > meta.expiresAt);
+    }
+
+    function hasPendingDemoMigration() {
+      const meta = getDemoMeta();
+      return !!(meta && meta.migrated === false);
+    }
+
+    function showDemoExpiredScreen() {
+      hideLoading();
+      const authWrap = el('auth-wrap');
+      const app = el('app');
+      const empPortal = el('emp-portal');
+      if (authWrap) authWrap.classList.remove('show');
+      if (app) app.classList.remove('show');
+      if (empPortal) empPortal.classList.remove('show');
+
+      let overlay = document.getElementById('demo-expired-overlay');
+      if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'demo-expired-overlay';
+        overlay.style.cssText = 'position:fixed;inset:0;background:#0a0f1e;display:flex;align-items:center;justify-content:center;padding:24px;z-index:10000;';
+        overlay.innerHTML = `
+          <div style="max-width:520px;width:100%;background:#141929;border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:28px;text-align:center;color:#fff;">
+            <div style="width:60px;height:60px;border-radius:50%;background:rgba(240,84,90,.12);border:1px solid rgba(240,84,90,.22);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:22px;color:#f0545a;">
+              <i class="fas fa-clock"></i>
+            </div>
+            <h1 style="margin-bottom:12px;font-size:24px;">انتهت النسخة التجريبية</h1>
+            <p style="color:#8b91a8;line-height:1.9;margin-bottom:18px;">
+              انتهت مدة التجربة المجانية. جميع بياناتك محفوظة. برجاء التواصل مع الدعم الفني لتفعيل النسخة المدفوعة، وبعد تسجيل الدخول سيتم الاستمرار بنفس البيانات التي أدخلتها أثناء التجربة.
+            </p>
+            <button onclick="location.reload()" style="padding:12px 18px;border:none;border-radius:12px;background:#4f8cff;color:#fff;font-weight:700;cursor:pointer;">
+              لدي بيانات دخول
+            </button>
+          </div>
+        `;
+        document.body.appendChild(overlay);
+      } else {
+        overlay.style.display = 'flex';
+      }
+    }
+
+    function enterDemoMode() {
+      initDemoMode();
+      if (isDemoExpired()) {
+        showDemoExpiredScreen();
+        return;
+      }
+      DB.set('current_user', {
+        name: 'نسخة تجريبية',
+        email: 'demo@local',
+        role: 'admin',
+        demo: true
+      });
+      CUR_USER = null;
+      CUR_DOC = { name: 'نسخة تجريبية', email: 'demo@local', role: 'admin', companyId: null, companyName: '' };
+      CUR_CID = null;
+      CUR_CNAME = '';
+      enterApp('نسخة تجريبية', 'demo@local', true);
+    }
+
+    async function migrateDemoDataToAccount() {
+      const meta = getDemoMeta();
+      if (!FB_OK || !getCID() || !meta || meta.migrated !== false) return false;
+
+      const keys = ['employees', 'attendance', 'leaves', 'overtime', 'notifications'];
+      for (const key of keys) {
+        const items = DB.get(key) || [];
+        for (const item of items) {
+          const id = item?.id || (Date.now() + Math.random().toString(36).slice(2));
+          await FDB.set(tcol(key), id, { ...item, id, migratedFromDemo: true });
+        }
+      }
+
+      const settings = DB.get('settings');
+      if (settings) await FDB.set(tcol('settings'), 'main', { ...settings, migratedFromDemo: true });
+
+      const departments = DB.get('departments') || [];
+      if (departments.length) await FDB.set(tcol('settings'), 'departments', { items: departments, migratedFromDemo: true });
+
+      const company = DB.get('company');
+      if (company) {
+        const companyData = { ...company };
+        delete companyData.id;
+        await FDB.set('companies', getCID(), { ...companyData, migratedFromDemo: true });
+      }
+
+      localStorage.setItem(DEMO_KEY, JSON.stringify({
+        ...meta,
+        migrated: true,
+        migratedAt: Date.now(),
+        migratedCompanyId: getCID()
+      }));
+
+      const current = DB.get('current_user') || {};
+      if (current.demo) DB.set('current_user', { ...current, demo: false });
+      return true;
+    }
+
     // ── INIT ──
     function initData() {
       if (!DB.get('init')) {
@@ -4592,15 +4740,29 @@
       auth.signInWithEmailAndPassword(email, pass).then(async c => {
         const doc = await FDB.get('users', c.user.uid);
         if (!doc) { showAlert('الحساب غير موجود في النظام'); auth.signOut(); resetLoginButton(); return; }
+
+        const demoMigrationPending = hasPendingDemoMigration();
+
         persistRememberedLogin(email, remember);
         DB.set('current_user', { name: doc.name, email: doc.email, role: doc.role, uid: c.user.uid, companyId: doc.companyId || null, companyName: doc.companyName || '' });
         CUR_USER = c.user; CUR_DOC = doc; CUR_CID = doc.companyId || null; CUR_CNAME = doc.companyName || '';
+
+        if (demoMigrationPending && doc.role !== 'employee') {
+          try {
+            const migrated = await migrateDemoDataToAccount();
+            if (migrated) toast('تم ترحيل بيانات النسخة التجريبية إلى حسابك');
+          } catch (migErr) {
+            console.error('Demo migration failed:', migErr);
+            toast('تم تسجيل الدخول، لكن تعذر ترحيل بعض بيانات النسخة التجريبية', 'warn');
+          }
+        }
+
         if (doc.role === 'employee') enterEmpPortal(doc.name, doc.email);
         else enterApp(doc.name, doc.email);
       }).catch(err => {
         const msgs = { 'auth/user-not-found': 'البريد غير مسجل', 'auth/wrong-password': 'كلمة المرور خاطئة', 'auth/invalid-credential': 'بيانات الدخول غير صحيحة', 'auth/too-many-requests': 'تجاوزت عدد المحاولات', 'no-firebase': 'Firebase غير متاح' };
         showAlert(msgs[err.code] || 'خطأ: ' + err.message);
-        btn.disabled = false; btn.innerHTML = '<i class="fas fa-sign-in-alt"></i>دخول';
+        resetLoginButton();
       });
     }
 
@@ -4697,12 +4859,29 @@
     }
 
     function checkAuth() {
+      const cached = DB.get('current_user');
+
+      if (cached?.demo) {
+        initDemoMode();
+        if (isDemoExpired()) {
+          showDemoExpiredScreen();
+          return;
+        }
+        CUR_USER = null;
+        CUR_DOC = cached;
+        CUR_CID = null;
+        CUR_CNAME = '';
+        enterApp(cached.name || 'نسخة تجريبية', cached.email || 'demo@local', true);
+        return;
+      }
+
       // لو Firebase مش متاح — اظهر login مباشرة
       if (!FB_OK) {
         hideLoading();
         el('auth-wrap').classList.add('show');
         return;
       }
+
       auth.onAuthStateChanged(async fb => {
         if (fb) {
           try {
@@ -4718,7 +4897,6 @@
               el('auth-wrap').classList.add('show');
             }
           } catch (e) {
-            // لو فشل الاتصال — جرب من cache
             const c = DB.get('current_user');
             if (c?.name) {
               CUR_CID = c.companyId || null; CUR_CNAME = c.companyName || '';
@@ -4730,7 +4908,6 @@
             }
           }
         } else {
-          // مفيش user مسجل
           hideLoading();
           el('auth-wrap').classList.add('show');
         }
