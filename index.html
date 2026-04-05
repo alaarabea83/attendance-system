@@ -2555,8 +2555,14 @@
 
       .page-header>button,
       .page-header>.btn {
-        width: 100%;
+        width: auto;
+        min-width: fit-content;
+        max-width: 100%;
         justify-content: center;
+        align-self: flex-start;
+        padding: 9px 14px;
+        border-radius: 12px;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
       }
 
       /* ── stats ── */
@@ -2582,6 +2588,37 @@
 
       .stat-label {
         font-size: 11px;
+      }
+
+      .stat-card {
+        display: grid;
+        grid-template-columns: 32px 1fr;
+        grid-template-areas:
+          "icon label"
+          "value value";
+        align-items: center;
+        gap: 10px 10px;
+      }
+
+      .stat-top {
+        grid-area: icon;
+        margin-bottom: 0;
+        justify-content: flex-start;
+      }
+
+      .stat-value {
+        grid-area: value;
+        font-size: 28px;
+        line-height: 1;
+      }
+
+      .stat-label {
+        grid-area: label;
+        font-size: 11px;
+        line-height: 1.45;
+        min-height: 30px;
+        display: flex;
+        align-items: center;
       }
 
       /* ── clock widget — centered on mobile ── */
@@ -2611,8 +2648,11 @@
       .clock-btn {
         flex: 1;
         justify-content: center;
-        padding: 10px 8px;
-        font-size: 12px;
+        padding: 14px 12px;
+        min-height: 48px;
+        font-size: 13px;
+        font-weight: 700;
+        border-radius: 12px;
       }
 
       /* ── quick actions ── */
@@ -2647,8 +2687,10 @@
       }
 
       .filter-bar .btn {
-        width: 100%;
+        width: auto;
+        min-width: fit-content;
         justify-content: center;
+        align-self: flex-start;
       }
 
       /* ── cards ── */
@@ -2751,8 +2793,10 @@
       }
 
       #page-reports .filter-bar .btn {
-        width: 100% !important;
+        width: auto !important;
+        min-width: fit-content;
         justify-content: center;
+        align-self: flex-start;
       }
 
       /* ── payroll settings grid ── */
@@ -2880,7 +2924,29 @@
       .clock-btn {
         width: 100%;
         justify-content: center;
-        font-size: 12.5px;
+        min-height: 50px;
+        padding: 14px 12px;
+        font-size: 13px;
+        font-weight: 700;
+        border-radius: 12px;
+      }
+
+      .stat-card {
+        grid-template-columns: 30px 1fr;
+        gap: 8px 8px;
+      }
+
+      .stat-top {
+        margin-bottom: 0;
+      }
+
+      .stat-value {
+        font-size: 24px;
+      }
+
+      .stat-label {
+        font-size: 10.5px;
+        min-height: 28px;
       }
 
       /* ── topbar ── */
@@ -2962,8 +3028,30 @@
       }
 
       .clock-btn {
-        padding: 7px 12px;
-        font-size: 11.5px;
+        padding: 13px 12px;
+        min-height: 48px;
+        font-size: 12.5px;
+        font-weight: 700;
+      }
+
+      #page-dashboard .page-header>.btn,
+      #page-attendance .page-header>.btn,
+      #page-employees .page-header>.btn,
+      #page-leaves .page-header>.btn,
+      #page-reports .page-header>.btn,
+      #page-overtime .page-header>.btn,
+      #page-notifications .page-header>.btn,
+      #page-payroll .page-header>.btn,
+      #page-dashboard .page-header>button,
+      #page-attendance .page-header>button,
+      #page-employees .page-header>button,
+      #page-leaves .page-header>button,
+      #page-reports .page-header>button,
+      #page-overtime .page-header>button,
+      #page-notifications .page-header>button,
+      #page-payroll .page-header>button {
+        width: auto;
+        max-width: 100%;
       }
 
       /* ── overtime stats ── */
@@ -4270,6 +4358,42 @@
     // ── HELPERS ──
     function el(id) { return document.getElementById(id); }
     function today() { return new Date().toISOString().slice(0, 10); }
+    function notifDateValue(n) {
+      const v = n?.createdAtISO || n?.timestamp || n?.createdAt || null;
+      if (!v) return null;
+      if (v instanceof Date) return isNaN(v.getTime()) ? null : v;
+      if (typeof v?.toDate === 'function') {
+        const d = v.toDate();
+        return isNaN(d?.getTime?.()) ? null : d;
+      }
+      if (typeof v?.seconds === 'number') {
+        const d = new Date(v.seconds * 1000);
+        return isNaN(d.getTime()) ? null : d;
+      }
+      if (typeof v === 'string' || typeof v === 'number') {
+        const d = new Date(v);
+        return isNaN(d.getTime()) ? null : d;
+      }
+      return null;
+    }
+    function formatNotifTime(n) {
+      const d = notifDateValue(n);
+      if (!d) return n?.time || '—';
+      const now = new Date();
+      const diff = Math.max(0, now - d);
+      const mins = Math.floor(diff / 60000);
+      const hrs = Math.floor(diff / 3600000);
+      const days = Math.floor(diff / 86400000);
+      if (mins < 1) return 'الآن';
+      if (mins < 60) return `منذ ${mins} د`;
+      if (hrs < 24) return `منذ ${hrs} س`;
+      if (days === 1) return `أمس ${d.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}`;
+      if (days < 7) return `منذ ${days} أيام`;
+      return d.toLocaleString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+    function makeNotif(data) {
+      return { ...data, time: 'الآن', createdAtISO: new Date().toISOString() };
+    }
     function calcHrs(i, o) { if (!i || !o) return '—'; const [ih, im] = i.split(':').map(Number); const [oh, om] = o.split(':').map(Number); const m = (oh * 60 + om) - (ih * 60 + im); if (m <= 0) return '—'; return `${Math.floor(m / 60)}س ${m % 60 > 0 ? m % 60 + 'د' : ''}`; }
     function initials(n) { if (!n) return '?'; const p = n.trim().split(' '); return p.length >= 2 ? p[0][0] + p[1][0] : p[0].slice(0, 2); }
     function empColor(n) {
@@ -4524,7 +4648,7 @@
         // لأن التحديثات (موافقة/رفض/حذف) بتتحفظ في Firestore مباشرة
         FDB.getAll(tcol('leaves')).then(d => { if (d.length) DB.set('leaves', d); }).catch(() => { }),
         FDB.getAll(tcol('overtime')).then(d => { if (d.length) DB.set('overtime', d); }).catch(() => { }),
-        FDB.getAll(tcol('notifications')).then(d => { d.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)); DB.set('notifications', d); }).catch(() => { }),
+        FDB.getAll(tcol('notifications')).then(d => { d.sort((a, b) => (notifDateValue(b)?.getTime?.() || 0) - (notifDateValue(a)?.getTime?.() || 0)); DB.set('notifications', d); }).catch(() => { }),
         FDB.get(tcol('settings'), 'main').then(s => { if (s) DB.set('settings', s); }).catch(() => { }),
         FDB.get(tcol('settings'), 'departments').then(s => { if (s?.items) DB.set('departments', s.items); }).catch(() => { }),
         FDB.get('companies', getCID()).then(c => { if (c) DB.set('company_profile', c); }).catch(() => { })
@@ -4911,14 +5035,34 @@
       <div style="flex:1;">
         <div style="font-size:13px;font-weight:600;margin-bottom:2px;">${n.title}${!n.read ? '<span style="font-size:9.5px;background:var(--accent);color:#fff;padding:1px 6px;border-radius:20px;margin-right:6px;">جديد</span>' : ''}</div>
         <div style="font-size:12px;color:var(--text2);">${n.text}</div>
-        <div style="font-size:10.5px;color:var(--text3);margin-top:3px;font-family:'JetBrains Mono',monospace;">${n.time}</div>
+        <div style="font-size:10.5px;color:var(--text3);margin-top:3px;font-family:'JetBrains Mono',monospace;">${formatNotifTime(n)}</div>
       </div>
     </div>`).join('') : '<div class="empty-state"><i class="fas fa-bell-slash"></i><h3>لا توجد إشعارات</h3></div>';
       updateBadges();
     }
 
-    function markRead(i) { const n = DB.get('notifications') || []; if (n[i]) { n[i].read = true; DB.set('notifications', n); renderNotifs(); } }
-    function markAllRead() { DB.set('notifications', (DB.get('notifications') || []).map(n => ({ ...n, read: true }))); renderNotifs(); toast('تم تعيين الكل كمقروء'); }
+    async function markRead(i) {
+      const n = DB.get('notifications') || [];
+      if (!n[i]) return;
+      n[i].read = true;
+      DB.set('notifications', n);
+      renderNotifs();
+      if (FB_OK && n[i].id) {
+        try { await FDB.update(tcol('notifications'), n[i].id, { read: true }); } catch (_) { }
+      }
+    }
+
+    async function markAllRead() {
+      const items = (DB.get('notifications') || []).map(n => ({ ...n, read: true }));
+      DB.set('notifications', items);
+      renderNotifs();
+      toast('تم تعيين الكل كمقروء');
+      if (FB_OK) {
+        await Promise.all(items.filter(n => n.id).map(n =>
+          FDB.update(tcol('notifications'), n.id, { read: true }).catch(() => { })
+        ));
+      }
+    }
 
     // ── SETTINGS ──
     function renderSettings() {
@@ -5043,7 +5187,7 @@
       const lr = DB.push('attendance', rec);
       try { await FDB.addWithId(tcol('attendance'), lr.id, rec); } catch (e) { console.warn('att save:', e); }
       if (fs === 'متأخر' || fs === 'غائب') {
-        const notifRec = { type: fs === 'متأخر' ? 'warning' : 'danger', icon: fs === 'متأخر' ? 'fas fa-clock' : 'fas fa-user-xmark', title: fs === 'متأخر' ? 'موظف متأخر' : 'موظف غائب', text: `${emp.name} — ${fs === 'متأخر' ? 'تأخر' : 'لم يسجل حضوره'}`, time: 'الآن', read: false };
+        const notifRec = makeNotif({ type: fs === 'متأخر' ? 'warning' : 'danger', icon: fs === 'متأخر' ? 'fas fa-clock' : 'fas fa-user-xmark', title: fs === 'متأخر' ? 'موظف متأخر' : 'موظف غائب', text: `${emp.name} — ${fs === 'متأخر' ? 'تأخر' : 'لم يسجل حضوره'}`, read: false });
         const notifLocal = DB.push('notifications', notifRec);
         FDB.addWithId(tcol('notifications'), notifLocal.id, notifRec).catch(() => { });
       }
@@ -5339,7 +5483,7 @@
       const rec = { empId: emp?.id || u.empId || u.uid || '', empName: u.name, dept: emp?.dept || '—', companyId: getCID(), date: td, checkIn: now, checkOut: '', status, notes: '' };
       const lr = DB.push('attendance', rec);
       try { await FDB.addWithId(tcol('attendance'), lr.id, rec); } catch (e) { console.warn('empCheckIn:', e); }
-      const notifRec = { type: status === 'متأخر' ? 'warning' : 'success', icon: 'fas fa-sign-in-alt', title: status === 'متأخر' ? 'موظف متأخر' : 'تسجيل حضور', text: `${u.name} الساعة ${now}`, time: 'الآن', read: false };
+      const notifRec = makeNotif({ type: status === 'متأخر' ? 'warning' : 'success', icon: 'fas fa-sign-in-alt', title: status === 'متأخر' ? 'موظف متأخر' : 'تسجيل حضور', text: `${u.name} الساعة ${now}`, read: false });
       const notifLocal = DB.push('notifications', notifRec);
       FDB.addWithId(tcol('notifications'), notifLocal.id, notifRec).catch(() => { });
       showEpToast(status === 'متأخر' ? `تم التسجيل — متأخر ${diff} دقيقة` : 'تم تسجيل الحضور ✓', status === 'متأخر' ? 'warn' : 'ok');
@@ -5355,7 +5499,7 @@
       const now = new Date().toTimeString().slice(0, 5);
       DB.update('attendance', ex.id, { checkOut: now });
       try { await FDB.update(tcol('attendance'), ex.id, { checkOut: now }); } catch (e) { console.warn('empCheckOut:', e); }
-      const notifRec = { type: 'info', icon: 'fas fa-sign-out-alt', title: 'تسجيل انصراف', text: `${u.name} الساعة ${now}`, time: 'الآن', read: false };
+      const notifRec = makeNotif({ type: 'info', icon: 'fas fa-sign-out-alt', title: 'تسجيل انصراف', text: `${u.name} الساعة ${now}`, read: false });
       const notifLocal = DB.push('notifications', notifRec);
       FDB.addWithId(tcol('notifications'), notifLocal.id, notifRec).catch(() => { });
       showEpToast('تم تسجيل الانصراف ✓', 'ok');
@@ -5372,7 +5516,7 @@
       const rec = { empId: emp?.id || u.empId || u.uid || '', empName: u.name, dept: emp?.dept || '—', companyId: getCID(), type: el('ep-leave-type').value, from, to, days, reason: el('ep-leave-reason').value?.trim() || '', status: 'قيد المراجعة', createdBy: 'employee' };
       const lr = DB.push('leaves', rec);
       try { await FDB.addWithId(tcol('leaves'), lr.id, rec); } catch (e) { console.warn('empLeave:', e); }
-      const notifRec = { type: 'info', icon: 'fas fa-calendar-plus', title: 'طلب إجازة', text: `${u.name} طلب إجازة من ${from} إلى ${to}`, time: 'الآن', read: false };
+      const notifRec = makeNotif({ type: 'info', icon: 'fas fa-calendar-plus', title: 'طلب إجازة', text: `${u.name} طلب إجازة من ${from} إلى ${to}`, read: false });
       const notifLocal = DB.push('notifications', notifRec);
       FDB.addWithId(tcol('notifications'), notifLocal.id, notifRec).catch(() => { });
       el('ep-leave-from').value = el('ep-leave-to').value = el('ep-leave-reason').value = '';
