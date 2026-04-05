@@ -313,6 +313,70 @@
       display: block;
     }
 
+    .remember-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 4px 0 14px;
+      color: var(--text2);
+      font-size: 12.5px;
+      font-weight: 500;
+      cursor: pointer;
+      user-select: none;
+      width: fit-content;
+    }
+
+    .remember-check {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .remember-check input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .remember-box {
+      width: 18px;
+      height: 18px;
+      border-radius: 6px;
+      border: 1px solid var(--line);
+      background: var(--ink3);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .remember-box i {
+      font-size: 10px;
+      color: #fff;
+      opacity: 0;
+      transform: scale(0.8);
+      transition: all 0.2s;
+    }
+
+    .remember-check input:checked+.remember-box {
+      background: var(--accent);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .remember-check input:checked+.remember-box i {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    #form-register,
+    #form-login .auth-divider,
+    #form-login .btn-secondary {
+      display: none !important;
+    }
+
     .inp-wrap {
       position: relative;
       margin-bottom: 12px;
@@ -3165,14 +3229,20 @@
         <div class="auth-form active" id="form-login">
           <form onsubmit="doLogin(event)">
             <div class="inp-wrap"><i class="fas fa-envelope inp-icon"></i><input type="email" id="li-email"
-                placeholder="البريد الإلكتروني" autocomplete="email"></div>
+                placeholder="البريد الإلكتروني" autocomplete="username"></div>
             <div class="inp-wrap"><i class="fas fa-lock inp-icon"></i><input type="password" id="li-pass"
                 placeholder="كلمة المرور" autocomplete="current-password"></div>
+
+            <label class="remember-row" for="li-remember">
+              <span class="remember-check">
+                <input type="checkbox" id="li-remember">
+                <span class="remember-box"><i class="fas fa-check"></i></span>
+              </span>
+              <span>تذكرني</span>
+            </label>
+
             <button type="submit" class="auth-btn"><i class="fas fa-sign-in-alt"></i>دخول</button>
           </form>
-          <div class="auth-divider">أو</div>
-          <button class="btn-secondary" onclick="switchTab('register')"><i class="fas fa-user-plus"></i>إنشاء حساب مدير
-            جديد</button>
         </div>
 
         <!-- REGISTER -->
@@ -4297,6 +4367,30 @@
     function rlabel(r) { return ROLE_LABELS[r] || r || '—'; }
     function canAccess(p) { return (ROLE_PAGES[getRole()] || []).includes(p); }
 
+    function resetLoginButton() {
+      const btn = document.querySelector('#form-login button[type="submit"]');
+      if (!btn) return;
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-sign-in-alt"></i>دخول';
+    }
+
+    function getRememberedLogin() {
+      return DB.get('remember_login') || { remember: false, email: '' };
+    }
+
+    function loadRememberedLogin() {
+      const saved = getRememberedLogin();
+      const emailEl = el('li-email');
+      const rememberEl = el('li-remember');
+      if (emailEl) emailEl.value = saved.remember ? (saved.email || '') : '';
+      if (rememberEl) rememberEl.checked = !!saved.remember;
+    }
+
+    function persistRememberedLogin(email, remember) {
+      if (remember) DB.set('remember_login', { remember: true, email: (email || '').trim() });
+      else DB.remove('remember_login');
+    }
+
     // ── INIT ──
     function initData() {
       if (!DB.get('init')) {
@@ -4491,12 +4585,14 @@
     function doLogin(e) {
       if (e) e.preventDefault();
       const email = el('li-email').value.trim(), pass = el('li-pass').value;
+      const remember = !!el('li-remember')?.checked;
       if (!email || !pass) { showAlert('يرجى إدخال البريد وكلمة المرور'); return; }
       const btn = document.querySelector('#form-login button[type="submit"]');
       btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>جاري الدخول...';
       auth.signInWithEmailAndPassword(email, pass).then(async c => {
         const doc = await FDB.get('users', c.user.uid);
-        if (!doc) { showAlert('الحساب غير موجود في النظام'); auth.signOut(); btn.disabled = false; btn.innerHTML = '<i class="fas fa-sign-in-alt"></i>دخول'; return; }
+        if (!doc) { showAlert('الحساب غير موجود في النظام'); auth.signOut(); resetLoginButton(); return; }
+        persistRememberedLogin(email, remember);
         DB.set('current_user', { name: doc.name, email: doc.email, role: doc.role, uid: c.user.uid, companyId: doc.companyId || null, companyName: doc.companyName || '' });
         CUR_USER = c.user; CUR_DOC = doc; CUR_CID = doc.companyId || null; CUR_CNAME = doc.companyName || '';
         if (doc.role === 'employee') enterEmpPortal(doc.name, doc.email);
@@ -4572,9 +4668,12 @@
     }
 
     let _logoutTarget = 'admin';
-    function doLogout() { _logoutTarget = 'admin'; el('logout-modal').classList.add('open'); }
+    function doLogout() {
+      resetLoginButton(); _logoutTarget = 'admin'; el('logout-modal').classList.add('open');
+    }
     function closeLogoutModal() { el('logout-modal').classList.remove('open'); }
     function confirmLogout() {
+      resetLoginButton();
       closeLogoutModal();
       if (_logoutTarget === 'employee') {
         DB.set('current_user', null); CUR_USER = null; CUR_DOC = null; CUR_CID = null; CUR_CNAME = null;
@@ -5524,7 +5623,9 @@
       loadEpData(u.name);
     }
 
-    function empLogout() { _logoutTarget = 'employee'; el('logout-modal').classList.add('open'); }
+    function empLogout() {
+      resetLoginButton(); _logoutTarget = 'employee'; el('logout-modal').classList.add('open');
+    }
 
     function showEpToast(msg, type = 'ok') {
       const c = { ok: 'var(--green)', warn: 'var(--yellow)', err: 'var(--red)' };
@@ -5539,6 +5640,7 @@
     // ── BOOT ──
     initData();
     applyTheme();
+    loadRememberedLogin();
     startClock();
     checkAuth();
 
