@@ -641,8 +641,7 @@
 
     /* ─── TOPBAR ─── */
     .topbar {
-      background: rgba(10, 15, 30, 0.8);
-      backdrop-filter: blur(12px);
+      background: var(--ink2);
       border-bottom: 1px solid var(--line);
       padding: 0 28px;
       height: 58px;
@@ -652,6 +651,13 @@
       position: sticky;
       top: 0;
       z-index: 50;
+      box-shadow: var(--shadow);
+    }
+
+    body.dark .topbar {
+      background: rgba(10, 15, 30, 0.9);
+      backdrop-filter: blur(12px);
+      box-shadow: none;
     }
 
     .tb-left {
@@ -2679,18 +2685,46 @@
 
       /* ── footer ── */
       footer {
-        padding: 14px 14px !important;
+        padding: 14px !important;
       }
 
       footer>div {
         flex-direction: column;
         align-items: center;
         text-align: center;
-        gap: 10px;
+        gap: 8px;
       }
 
-      footer>div>div:last-child {
-        display: none;
+      /* ── buttons smaller on mobile ── */
+      .btn {
+        padding: 7px 12px;
+        font-size: 12px;
+        gap: 5px;
+      }
+
+      .btn-sm {
+        padding: 5px 9px;
+        font-size: 11px;
+      }
+
+      .btn-icon {
+        padding: 6px 8px;
+      }
+
+      .page-header>.btn,
+      .page-header>button {
+        padding: 8px 14px;
+        font-size: 12.5px;
+      }
+
+      .card-head .btn {
+        padding: 6px 10px;
+        font-size: 11.5px;
+      }
+
+      .clock-btn {
+        padding: 8px 14px;
+        font-size: 12px;
       }
 
       /* ── payroll settings ── */
@@ -2828,6 +2862,27 @@
       .tab-btn {
         font-size: 11px;
         padding: 6px 4px;
+      }
+
+      /* ── buttons even smaller ── */
+      .btn {
+        padding: 6px 10px;
+        font-size: 11.5px;
+        gap: 4px;
+      }
+
+      .btn-sm {
+        padding: 4px 8px;
+        font-size: 10.5px;
+      }
+
+      .btn-icon {
+        padding: 5px 7px;
+      }
+
+      .clock-btn {
+        padding: 7px 12px;
+        font-size: 11.5px;
       }
 
       /* ── overtime stats ── */
@@ -3775,7 +3830,7 @@
               style="font-size:12px;color:var(--red);cursor:pointer;text-decoration:none;display:flex;align-items:center;gap:5px;"><i
                 class="fas fa-sign-out-alt"></i>خروج</a>
           </div>
-          <div
+          <div class="footer-dev"
             style="font-size:10.5px;color:var(--text3);background:var(--ink3);padding:4px 12px;border-radius:20px;border:1px solid var(--line);font-family:'JetBrains Mono',monospace;">
             Developed By: AlaaRabea</div>
         </div>
@@ -4358,10 +4413,12 @@
     async function loadAll() {
       if (!getCID()) return;
       await Promise.all([
-        FDB.getAll(tcol('employees')).then(d => DB.set('employees', d)).catch(() => { }),
-        FDB.getAll(tcol('attendance')).then(d => DB.set('attendance', d)).catch(() => { }),
-        FDB.getAll(tcol('leaves')).then(d => DB.set('leaves', d)).catch(() => { }),
-        FDB.getAll(tcol('overtime')).then(d => DB.set('overtime', d)).catch(() => { }),
+        FDB.getAll(tcol('employees')).then(d => { if (d.length) DB.set('employees', d); }).catch(() => { }),
+        FDB.getAll(tcol('attendance')).then(d => { if (d.length) DB.set('attendance', d); }).catch(() => { }),
+        // الإجازات: نجيب من Firestore ونحدث localStorage بشكل كامل
+        // لأن التحديثات (موافقة/رفض/حذف) بتتحفظ في Firestore مباشرة
+        FDB.getAll(tcol('leaves')).then(d => { if (d.length) DB.set('leaves', d); }).catch(() => { }),
+        FDB.getAll(tcol('overtime')).then(d => { if (d.length) DB.set('overtime', d); }).catch(() => { }),
         FDB.getAll(tcol('notifications')).then(d => { d.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)); DB.set('notifications', d); }).catch(() => { }),
         FDB.get(tcol('settings'), 'main').then(s => { if (s) DB.set('settings', s); }).catch(() => { }),
         FDB.get(tcol('settings'), 'departments').then(s => { if (s?.items) DB.set('departments', s.items); }).catch(() => { }),
@@ -4974,9 +5031,9 @@
 
     async function delRec(key, id) {
       if (!confirm('حذف هذا السجل؟')) return;
-      const row = (DB.get(key) || []).find(x => x.id === id);
+      // حذف من Firestore أولاً ثم localStorage
+      try { await FDB.delete(tcol(key), id); } catch (e) { console.warn('fs delete:', e); }
       DB.remove(key, id);
-      try { const fid = row?.fsId || (row?.id?.length > 15 ? row.id : null); if (fid) await FDB.delete(tcol(key), fid); } catch (e) { }
       toast('تم الحذف', 'err');
       renderPage(document.querySelector('.page.active')?.id?.replace('page-', ''));
       updateBadges();
