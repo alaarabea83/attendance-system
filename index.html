@@ -4488,16 +4488,33 @@
         showDemoExpiredScreen();
         return;
       }
+
+      const demoCompanyId = 'demo-local';
+      const demoCompanyName = 'نسخة تجريبية';
+
       DB.set('current_user', {
         name: 'نسخة تجريبية',
         email: 'demo@local',
         role: 'admin',
-        demo: true
+        demo: true,
+        companyId: demoCompanyId,
+        companyName: demoCompanyName
       });
+
+      if (!DB.get('company_profile')) {
+        DB.set('company_profile', {
+          id: demoCompanyId,
+          name: demoCompanyName,
+          phone: '',
+          address: '',
+          slug: 'demo-local'
+        });
+      }
+
       CUR_USER = null;
-      CUR_DOC = { name: 'نسخة تجريبية', email: 'demo@local', role: 'admin', companyId: null, companyName: '' };
-      CUR_CID = null;
-      CUR_CNAME = '';
+      CUR_DOC = { name: 'نسخة تجريبية', email: 'demo@local', role: 'admin', companyId: demoCompanyId, companyName: demoCompanyName, demo: true };
+      CUR_CID = demoCompanyId;
+      CUR_CNAME = demoCompanyName;
       enterApp('نسخة تجريبية', 'demo@local', true);
     }
 
@@ -4505,12 +4522,16 @@
       const meta = getDemoMeta();
       if (!FB_OK || !getCID() || !meta || meta.migrated !== false) return false;
 
+      const targetCompanyId = getCID();
       const keys = ['employees', 'attendance', 'leaves', 'overtime', 'notifications'];
+
       for (const key of keys) {
         const items = DB.get(key) || [];
         for (const item of items) {
           const id = item?.id || (Date.now() + Math.random().toString(36).slice(2));
-          await FDB.set(tcol(key), id, { ...item, id, migratedFromDemo: true });
+          const payload = { ...item, id, migratedFromDemo: true };
+          if ('companyId' in payload) payload.companyId = targetCompanyId;
+          await FDB.set(tcol(key), id, payload);
         }
       }
 
@@ -4520,22 +4541,22 @@
       const departments = DB.get('departments') || [];
       if (departments.length) await FDB.set(tcol('settings'), 'departments', { items: departments, migratedFromDemo: true });
 
-      const company = DB.get('company');
+      const company = DB.get('company_profile') || DB.get('company');
       if (company) {
         const companyData = { ...company };
         delete companyData.id;
-        await FDB.set('companies', getCID(), { ...companyData, migratedFromDemo: true });
+        await FDB.set('companies', targetCompanyId, { ...companyData, migratedFromDemo: true });
       }
 
       localStorage.setItem(DEMO_KEY, JSON.stringify({
         ...meta,
         migrated: true,
         migratedAt: Date.now(),
-        migratedCompanyId: getCID()
+        migratedCompanyId: targetCompanyId
       }));
 
       const current = DB.get('current_user') || {};
-      if (current.demo) DB.set('current_user', { ...current, demo: false });
+      if (current.demo) DB.set('current_user', { ...current, demo: false, companyId: targetCompanyId });
       return true;
     }
 
@@ -4673,6 +4694,12 @@
       if (df[id] && el(df[id])) el(df[id]).value = td;
       if (id === 'modal-leave' && el('lv-to') && !el('lv-to').value) el('lv-to').value = td;
       el(id).classList.add('open');
+
+      if (id === 'modal-emp') {
+        const isDemo = !!(DB.get('current_user') || {}).demo;
+        const loginWrap = el('e-login-email')?.closest('div[style*="background:var(--accent-glow)"]');
+        if (loginWrap) loginWrap.style.opacity = isDemo ? '0.72' : '1';
+      }
     }
     function closeModal(id) { el(id).classList.remove('open'); }
 
@@ -4869,8 +4896,8 @@
         }
         CUR_USER = null;
         CUR_DOC = cached;
-        CUR_CID = null;
-        CUR_CNAME = '';
+        CUR_CID = cached.companyId || 'demo-local';
+        CUR_CNAME = cached.companyName || 'نسخة تجريبية';
         enterApp(cached.name || 'نسخة تجريبية', cached.email || 'demo@local', true);
         return;
       }
@@ -5475,9 +5502,32 @@
       const name = el('e-name').value.trim(), job = el('e-job').value.trim(), dept = el('e-dept').value;
       const le = el('e-login-email').value.trim(), lp = el('e-login-pass').value.trim();
       if (!name || !job || !dept) { toast('يرجى ملء الحقول المطلوبة', 'warn'); return; }
+
+      const currentUser = DB.get('current_user') || {};
+      const isDemo = !!currentUser.demo;
+      const cid = getCID();
+      if (!cid) { toast('لا توجد شركة مرتبطة', 'err'); return; }
+
+      if (isDemo) {
+        const colors = ['#4f8cff', '#22c98a', '#f5b942', '#f0545a', '#a78bfa', '#06b6d4', '#f97316', '#ec4899'];
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        const id = 'demo_emp_' + Date.now() + Math.random().toString(36).slice(2, 7);
+        const empData = {
+          id, uid: '', companyId: cid, companyName: CUR_CNAME || 'نسخة تجريبية',
+          name, job, dept, shift: el('e-shift').value, leaveBalance: parseInt(el('e-lbal').value) || 21,
+          phone: el('e-phone').value.trim(), email: el('e-email').value.trim() || le, loginEmail: le,
+          hireDate: el('e-hire').value, color, salary: 0, active: true, role: el('e-role').value || 'employee',
+          createdAt: new Date().toISOString(), demoOnly: true
+        };
+        DB.push('employees', empData);
+        closeModal('modal-emp');
+        toast('تم إنشاء الموظف داخل النسخة التجريبية');
+        renderPage(document.querySelector('.page.active')?.id?.replace('page-', ''));
+        return;
+      }
+
       if (!le || !lp) { toast('يرجى إدخال بيانات الدخول', 'warn'); return; }
       if (lp.length < 6) { toast('كلمة المرور 6 أحرف على الأقل', 'warn'); return; }
-      const cid = getCID(); if (!cid) { toast('لا توجد شركة مرتبطة', 'err'); return; }
       const btn = el('emp-save-btn'); btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>جاري الإنشاء...';
       try {
         const sec = firebase.initializeApp(FB_CFG, 'sec_' + Date.now());
@@ -5488,20 +5538,21 @@
         const empData = { id: uid, uid, companyId: cid, companyName: CUR_CNAME || DB.get('current_user')?.companyName || '', name, job, dept, shift: el('e-shift').value, leaveBalance: parseInt(el('e-lbal').value) || 21, phone: el('e-phone').value.trim(), email: el('e-email').value.trim() || le, loginEmail: le, hireDate: el('e-hire').value, color, salary: 0, active: true, role: el('e-role').value || 'employee', createdAt: new Date().toISOString() };
         await FDB.set('users', uid, { name, email: le, role: el('e-role').value || 'employee', active: true, empId: uid, companyId: cid, companyName: CUR_CNAME || '' });
         await FDB.set(tcol('employees'), uid, empData);
-        const le_ = DB.get('employees') || []; le_.push({ ...empData }); DB.set('employees', le_);
-        btn.disabled = false; btn.innerHTML = '<i class="fas fa-floppy-disk"></i>إضافة';
+        DB.push('employees', empData);
         closeModal('modal-emp');
-        showCredModal(name, le, lp);
+        toast('تم إنشاء الموظف بنجاح');
         renderPage(document.querySelector('.page.active')?.id?.replace('page-', ''));
-        ['e-name', 'e-job', 'e-phone', 'e-email', 'e-hire', 'e-login-email', 'e-login-pass'].forEach(id => { const e = el(id); if (e) e.value = ''; });
-        toast('تم إضافة الموظف بنجاح');
-      } catch (err) {
-        btn.disabled = false; btn.innerHTML = '<i class="fas fa-floppy-disk"></i>إضافة';
-        const ms = { 'auth/email-already-in-use': 'البريد مستخدم بالفعل', 'auth/weak-password': 'كلمة المرور ضعيفة' };
-        toast(ms[err.code] || 'خطأ: ' + err.message, 'err');
+      } catch (e) {
+        const msgs = { 'auth/email-already-in-use': 'البريد مستخدم بالفعل', 'auth/invalid-email': 'البريد غير صالح', 'auth/weak-password': 'كلمة المرور ضعيفة' };
+        toast(msgs[e.code] || ('تعذر إنشاء الموظف: ' + (e.message || 'خطأ غير معروف')), 'err');
+      } finally {
+        const btn2 = el('emp-save-btn');
+        if (btn2) {
+          btn2.disabled = false;
+          btn2.innerHTML = '<i class="fas fa-floppy-disk"></i>إضافة';
+        }
       }
     }
-
     function showCredModal(name, email, pass) {
       const ov = document.createElement('div');
       ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:2000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);padding:20px;';
