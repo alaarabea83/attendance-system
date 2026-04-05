@@ -11,19 +11,19 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
   <style>
     :root {
-      /* ── Light Mode (Default) ── */
-      --ink: #f4f6fb;
-      --ink2: #ffffff;
-      --ink3: #f0f2f8;
-      --mid: #dde1ef;
-      --line: rgba(0, 0, 0, 0.08);
-      --line2: rgba(0, 0, 0, 0.04);
-      --text: #1a2035;
-      --text2: #5a6282;
-      --text3: #9399b2;
-      --accent: #1a56db;
-      --accent2: #1240a8;
-      --accent-glow: rgba(26, 86, 219, 0.1);
+      /* ── Light Mode (Default) — warm slate ── */
+      --ink: #eef0f7;
+      --ink2: #f7f8fc;
+      --ink3: #e8eaf4;
+      --mid: #d0d4e8;
+      --line: rgba(26, 32, 80, 0.1);
+      --line2: rgba(26, 32, 80, 0.05);
+      --text: #111827;
+      --text2: #4b5275;
+      --text3: #8b90ab;
+      --accent: #2563eb;
+      --accent2: #1d4ed8;
+      --accent-glow: rgba(37, 99, 235, 0.12);
       --green: #059669;
       --green-bg: rgba(5, 150, 105, 0.1);
       --red: #dc2626;
@@ -36,7 +36,7 @@
       --r-sm: 8px;
       --r-lg: 18px;
       --sidebar: 248px;
-      --shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+      --shadow: 0 2px 12px rgba(26, 32, 80, 0.1);
     }
 
     /* ── Dark Mode ── */
@@ -814,18 +814,19 @@
     .stat-top {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      margin-bottom: 14px;
+      gap: 10px;
+      margin-bottom: 12px;
     }
 
     .stat-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 10px;
+      width: 36px;
+      height: 36px;
+      border-radius: 9px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 16px;
+      font-size: 15px;
+      flex-shrink: 0;
     }
 
     .si-blue {
@@ -853,18 +854,19 @@
       color: var(--purple);
     }
 
-    .stat-value {
-      font-size: 32px;
-      font-weight: 700;
-      line-height: 1;
-      font-family: 'JetBrains Mono', monospace;
+    .stat-label {
+      font-size: 12px;
+      color: var(--text2);
+      font-weight: 600;
+      line-height: 1.3;
     }
 
-    .stat-label {
-      font-size: 11.5px;
-      color: var(--text2);
-      margin-top: 4px;
-      font-weight: 500;
+    .stat-value {
+      font-size: 34px;
+      font-weight: 800;
+      line-height: 1;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text);
     }
 
     /* ─── CARDS ─── */
@@ -2310,6 +2312,74 @@
       box-shadow: 0 6px 18px rgba(79, 140, 255, 0.3);
     }
 
+    /* ─── LOGOUT MODAL ─── */
+    #logout-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(6px);
+      z-index: 2000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    #logout-modal.open {
+      display: flex;
+    }
+
+    .logout-card {
+      background: var(--ink2);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 32px 28px 24px;
+      max-width: 360px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
+      animation: modalIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .logout-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: var(--red-bg);
+      border: 1px solid rgba(220, 38, 38, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      color: var(--red);
+      margin: 0 auto 18px;
+    }
+
+    .logout-title {
+      font-size: 17px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .logout-sub {
+      font-size: 13px;
+      color: var(--text2);
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+
+    .logout-btns {
+      display: flex;
+      gap: 10px;
+    }
+
+    .logout-btns .btn {
+      flex: 1;
+      justify-content: center;
+      padding: 11px;
+      font-size: 13.5px;
+    }
+
     /* ─── PAYROLL ─── */
     .payroll-summary {
       display: grid;
@@ -2496,25 +2566,36 @@
       }
 
       .stat-card {
-        padding: 14px;
+        padding: 12px 14px;
       }
 
       .stat-value {
-        font-size: 24px;
+        font-size: 26px;
       }
 
       .stat-icon {
-        width: 36px;
-        height: 36px;
-        font-size: 15px;
+        width: 32px;
+        height: 32px;
+        font-size: 13px;
+        border-radius: 8px;
       }
 
-      /* ── clock widget ── */
+      .stat-label {
+        font-size: 11px;
+      }
+
+      /* ── clock widget — centered on mobile ── */
       .clock-widget {
         padding: 18px;
         flex-direction: column;
-        align-items: flex-start;
+        align-items: center;
+        text-align: center;
         gap: 14px;
+      }
+
+      .clock-left {
+        text-align: center;
+        width: 100%;
       }
 
       .clock-time {
@@ -4061,6 +4142,19 @@
     </div>
   </div>
 
+  <!-- LOGOUT MODAL -->
+  <div id="logout-modal">
+    <div class="logout-card">
+      <div class="logout-icon"><i class="fas fa-sign-out-alt"></i></div>
+      <div class="logout-title">تسجيل الخروج</div>
+      <div class="logout-sub">هل تريد تسجيل الخروج من النظام؟<br>سيتم إنهاء جلستك الحالية.</div>
+      <div class="logout-btns">
+        <button class="btn btn-ghost" onclick="closeLogoutModal()"><i class="fas fa-times"></i>إلغاء</button>
+        <button class="btn btn-danger" onclick="confirmLogout()"><i class="fas fa-sign-out-alt"></i>خروج</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Container -->
   <div id="toast-wrap"></div>
 
@@ -4353,9 +4447,20 @@
       if (ls) { ls.classList.add('hide'); setTimeout(() => ls.remove(), 350); }
     }
 
-    function doLogout() {
-      if (!confirm('هل تريد تسجيل الخروج؟')) return;
-      auth.signOut().finally(clearUI);
+    let _logoutTarget = 'admin';
+    function doLogout() { _logoutTarget = 'admin'; el('logout-modal').classList.add('open'); }
+    function closeLogoutModal() { el('logout-modal').classList.remove('open'); }
+    function confirmLogout() {
+      closeLogoutModal();
+      if (_logoutTarget === 'employee') {
+        DB.set('current_user', null); CUR_USER = null; CUR_DOC = null; CUR_CID = null; CUR_CNAME = null;
+        auth.signOut().catch(() => { });
+        el('emp-portal').classList.remove('show');
+        el('auth-wrap').classList.add('show');
+        hideAlert();
+      } else {
+        auth.signOut().finally(clearUI);
+      }
     }
 
     function clearUI() {
@@ -5275,14 +5380,7 @@
       loadEpData(u.name);
     }
 
-    function empLogout() {
-      if (!confirm('تسجيل الخروج؟')) return;
-      DB.set('current_user', null); CUR_USER = null; CUR_DOC = null; CUR_CID = null; CUR_CNAME = null;
-      auth.signOut().catch(() => { });
-      el('emp-portal').classList.remove('show');
-      el('auth-wrap').classList.add('show');
-      hideAlert();
-    }
+    function empLogout() { _logoutTarget = 'employee'; el('logout-modal').classList.add('open'); }
 
     function showEpToast(msg, type = 'ok') {
       const c = { ok: 'var(--green)', warn: 'var(--yellow)', err: 'var(--red)' };
